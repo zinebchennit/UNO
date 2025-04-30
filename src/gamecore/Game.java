@@ -135,7 +135,7 @@ public class Game {
         moveToNextPlayer();
     }
 
-    private void moveToNextPlayer() {
+    public void moveToNextPlayer() {
         if (isClockwise) {
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
         } else {
@@ -143,7 +143,7 @@ public class Game {
         }
     }
 
-    private boolean isGameOver() {
+    public boolean isGameOver() {
         for (Player player : players) {
             if (player.getHandSize() == 0) {
                 return true;
@@ -172,5 +172,23 @@ public class Game {
 
     public List<Player> getPlayers() {
         return players;
+    }
+
+    public boolean playComputerCard() {
+        Player currentPlayer = getCurrentPlayer();
+        if (currentPlayer instanceof ComputerPlayer) {
+            boolean played = currentPlayer.playTurn(topCard);
+            if (played) {
+                Card playedCard = currentPlayer.getLastPlayedCard();
+                topCard = playedCard;
+                handleCardEffect(playedCard);
+                if (playedCard.getType().equals("Wild") || playedCard.getType().equals("Wild Draw Four")) {
+                    String newColor = ((ComputerPlayer) currentPlayer).chooseColor();
+                    playedCard.setColor(newColor);
+                }
+                return true;
+            }
+        }
+        return false;
     }
 }

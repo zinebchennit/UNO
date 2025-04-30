@@ -224,6 +224,12 @@ public class UnoGame {
         if (currentPlayer instanceof HumanPlayer) {
             currentPlayer.addCard(game.drawCard());
             updateGameView();
+            // Passer au tour suivant après avoir pioché
+            game.moveToNextPlayer();
+            // Faire jouer l'ordinateur tant que c'est son tour
+            while (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                playComputerTurn();
+            }
         }
     }
 
@@ -237,6 +243,7 @@ public class UnoGame {
         if (topCard != null) {
             CardView topCardView = new CardView(topCard);
             topCardView.setBounds(272, 84, 80, 120);
+            topCardView.setFaceUp(true);
             gamePanel.addChild(topCardView);
         }
 
@@ -258,6 +265,7 @@ public class UnoGame {
             for (Card card : playerCards) {
                 CardView cardView = new CardView(card);
                 cardView.setBounds(startX, 40, cardWidth, 120);
+                cardView.setFaceUp(true);
                 cardView.addCardClickListener(new CardView.CardClickListener() {
                     @Override
                     public void onCardClicked(CardView cardView) {
@@ -289,6 +297,11 @@ public class UnoGame {
             }
         }
 
+        // Vérifier si le jeu est terminé
+        if (game.isGameOver()) {
+            announceWinner();
+        }
+
         gamePanel.revalidate();
         gamePanel.repaint();
         playerPanel.revalidate();
@@ -304,7 +317,55 @@ public class UnoGame {
             int cardIndex = playerCards.indexOf(cardView.getCard());
             if (cardIndex != -1 && game.playCard(cardIndex)) {
                 updateGameView();
+                // Passer au tour suivant
+                game.moveToNextPlayer();
+                // Faire jouer l'ordinateur tant que c'est son tour
+                while (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                    playComputerTurn();
+                }
             }
+        }
+    }
+
+    private void playComputerTurn() {
+        Player currentPlayer = game.getCurrentPlayer();
+        if (currentPlayer instanceof ComputerPlayer) {
+            // Ajouter un petit délai pour que le joueur puisse voir ce qui se passe
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+
+            // Laisser l'ordinateur jouer son tour
+            boolean played = game.playComputerCard();
+            
+            if (!played) {
+                // Si l'ordinateur ne peut pas jouer, il pioche une carte
+                currentPlayer.addCard(game.drawCard());
+                // Passer au joueur suivant
+                game.moveToNextPlayer();
+            }
+
+            updateGameView();
+            System.out.println("Tour de l'ordinateur terminé");
+        }
+    }
+
+    private void announceWinner() {
+        String winner = null;
+        for (Player player : game.getPlayers()) {
+            if (player.getHandSize() == 0) {
+                winner = player.getName();
+                break;
+            }
+        }
+        if (winner != null) {
+            javax.swing.JOptionPane.showMessageDialog(window, 
+                winner + " a gagné la partie!", 
+                "Fin de la partie", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
         }
     }
 

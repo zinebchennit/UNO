@@ -1,7 +1,7 @@
 package gamecore;
 
 public class Card {
-    private final String color;
+    private String color;
     private final String type;
     private final int value;
 
@@ -24,17 +24,25 @@ public class Card {
     }
 
     public boolean canPlayOn(Card topCard) {
-        if (color.equals("Noir")) {  // Wild cards can be played on any card
+        if (type.equals("Wild") || type.equals("Wild Draw Four")) {
             return true;
         }
+
+        if (color.equals("Noir")) {
+            return false;
+        }
+
         return color.equals(topCard.getColor()) || type.equals(topCard.getType());
+    }
+
+    public void setColor(String color) {
+        if (this.type.equals("Wild") || this.type.equals("Wild Draw Four")) {
+            this.color = color;
+        }
     }
 
     @Override
     public String toString() {
-        if (type.equals("Number")) {
-            return color + " " + value;
-        }
-        return color + " " + type;
+        return color + " " + type + (type.equals("Number") ? " " + value : "");
     }
 }
