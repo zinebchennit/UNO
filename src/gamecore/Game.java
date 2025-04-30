@@ -169,4 +169,8 @@ public class Game {
             Thread.currentThread().interrupt();
         }
     }
+
+    public List<Player> getPlayers() {
+        return players;
+    }
 }

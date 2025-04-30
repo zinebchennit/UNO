@@ -4,13 +4,13 @@ import framework.core.Component;
 import framework.events.EventListener;
 import framework.events.MouseEvent;
 import gamecore.Card;
+import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.AlphaComposite;
-import java.awt.GradientPaint;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,14 +43,19 @@ public class CardView extends Component {
     try {
       // Charge l'image de dos de carte si pas encore chargée
       if (backImage == null) {
-        backImage = ImageIO.read(new File("src/resources/images/cards/BackFace.png"));
+        String backPath = System.getProperty("user.dir") + "/src/resources/images/cards/BackFace.png";
+        System.out.println("Loading back image from: " + backPath);
+        backImage = ImageIO.read(new File(backPath));
       }
 
       // Construit le nom du fichier de l'image en fonction de la carte
       String filename = getImageFilename();
-      cardImage = ImageIO.read(new File("src/resources/images/cards/" + filename));
+      String cardPath = System.getProperty("user.dir") + "/src/resources/images/cards/" + filename;
+      System.out.println("Loading card image from: " + cardPath);
+      cardImage = ImageIO.read(new File(cardPath));
     } catch (IOException e) {
       System.err.println("Erreur lors du chargement de l'image: " + e.getMessage());
+      e.printStackTrace();
       // En cas d'erreur, on utilisera le rendu par défaut
       cardImage = null;
     }

@@ -10,9 +10,10 @@ public class Window extends JFrame {
     super(title);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(width, height);
+    setMinimumSize(new Dimension(800, 600));
+    setLocationRelativeTo(null);
 
-    // Ajout d'un style moderne
-    setUndecorated(true);
+    // Style moderne avec bordures
     getRootPane().setBorder(javax.swing.BorderFactory.createLineBorder(new Color(30, 30, 30), 2));
 
     // Create root container
