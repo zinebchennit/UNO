@@ -11,6 +11,7 @@ public class Deck {
         this.cards = new ArrayList<>();
         this.discardPile = new ArrayList<>();
         initializeDeck();
+        shuffle();
     }
     
     private void initializeDeck() {

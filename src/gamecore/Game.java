@@ -32,11 +32,20 @@ public class Game {
     }
 
     private void dealInitialCards() {
+        // Distribuer les cartes initiales
         for (Player player : players) {
             for (int i = 0; i < 7; i++) {
                 player.addCard(deck.drawCard());
             }
         }
+
+        // S'assurer que la première carte n'est pas une carte spéciale
+        do {
+            topCard = deck.drawCard();
+            if (topCard.getType().equals("Wild") || topCard.getType().equals("Wild Draw Four")) {
+                deck.discard(topCard);
+            }
+        } while (topCard.getType().equals("Wild") || topCard.getType().equals("Wild Draw Four"));
     }
 
     public void playGame() {
