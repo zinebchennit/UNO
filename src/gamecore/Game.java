@@ -91,6 +91,7 @@ public class Game {
             System.out.println(player.getName() + " has " + player.getHandSize() + " cards");
         }
     }
+    
 
     public void playGame() {
         while (!isGameOver()) {
@@ -101,6 +102,7 @@ public class Game {
             if (played) {
                 topCard = currentPlayer.getLastPlayedCard();
                 handleCardEffect(currentPlayer.getLastPlayedCard());
+                moveToNextPlayer();
             } else {
                 currentPlayer.addCard(deck.drawCard());
                 moveToNextPlayer();

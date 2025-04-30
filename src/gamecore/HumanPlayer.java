@@ -92,10 +92,37 @@ public class HumanPlayer extends Player {
         this.selectedCard = card;
     }
 
-    public void setSelectedColor(String color) {
+    public String setSelectedColor(String color) {
         this.selectedColor = color;
+        boolean validInput = false;
+        while (!validInput) {
+            System.out.println("Choisissez une couleur:");
+            System.out.println("1. Rouge");
+            System.out.println("2. Bleu");
+            System.out.println("3. Vert");
+            System.out.println("4. Jaune");
+    
+            try {
+                int choice = Integer.parseInt(scanner.nextLine());
+                switch (choice) {
+                    case 1:
+                        return "Rouge";
+                    case 2:
+                        return "Bleu";
+                    case 3:
+                        return "Vert";
+                    case 4:
+                        return "Jaune";
+                    default:
+                        System.out.println("Choix invalide. Veuillez choisir un nombre entre 1 et 4.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Entrée invalide. Veuillez entrer un nombre entre 1 et 4.");
+            }
+        }
+        return "Rouge"; // Couleur par défaut (ne devrait jamais être atteint)
     }
-
+    
     public void displayHand() {
         System.out.println("\nVotre main (" + name + "):");
         for (int i = 0; i < hand.size(); i++) {
