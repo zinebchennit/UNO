@@ -1,9 +1,9 @@
 package gamecore;
 
 public class Card {
-    private String color;      
-    private String type;       
-    private int value;         
+    private final String color;
+    private final String type;
+    private final int value;
 
     public Card(String color, String type, int value) {
         this.color = color;
@@ -15,10 +15,6 @@ public class Card {
         return color;
     }
 
-    public void setColor(String color) {
-        this.color = color;
-    }
-
     public String getType() {
         return type;
     }
@@ -27,34 +23,18 @@ public class Card {
         return value;
     }
 
-    public boolean canBePlayedOn(Card topCard) {
-        
-        if (this.type.equals("Wild") || this.type.equals("Wild Draw Four")) {
+    public boolean canPlayOn(Card topCard) {
+        if (color.equals("Noir")) {  // Wild cards can be played on any card
             return true;
         }
-       
-        if (this.color.equals(topCard.getColor())) {
-            return true;
-        }
-        
-       
-        if (this.type.equals(topCard.getType()) && !this.type.equals("Number")) {
-            return true;
-        }
-       
-        if (this.type.equals("Number") && topCard.getType().equals("Number") && this.value == topCard.getValue()) {
-            return true;
-        }
-        
-        return false;
+        return color.equals(topCard.getColor()) || type.equals(topCard.getType());
     }
-    
+
     @Override
     public String toString() {
         if (type.equals("Number")) {
             return color + " " + value;
-        } else {
-            return color + " " + type;
         }
+        return color + " " + type;
     }
 }
