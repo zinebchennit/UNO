@@ -27,6 +27,10 @@ public class Container extends Component {
     repaint();
   }
 
+  public List<Component> getChildren() {
+    return children;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);

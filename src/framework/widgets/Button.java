@@ -59,51 +59,67 @@ public class Button extends Component {
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-    // Effet d'ombre
-    if (!isPressed) {
-      g2d.setColor(new Color(0, 0, 0, 50));
-      g2d.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 10, 10);
-    }
-
-    // Fond du bouton avec dégradé
+    // Background with gradient
     Color topColor = isPressed ? pressedColor : isHovered ? hoverColor : backgroundColor;
     Color bottomColor = new Color(
-        Math.max(0, topColor.getRed() - 15),
-        Math.max(0, topColor.getGreen() - 15),
-        Math.max(0, topColor.getBlue() - 15));
+        Math.max(0, topColor.getRed() - 20),
+        Math.max(0, topColor.getGreen() - 20),
+        Math.max(0, topColor.getBlue() - 20));
 
     GradientPaint gradient = new GradientPaint(
         0, 0, topColor,
         0, getHeight(), bottomColor);
 
+    // Draw shadow
+    if (!isPressed) {
+        g2d.setColor(new Color(0, 0, 0, 50));
+        g2d.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 15, 15);
+    }
+
+    // Draw button background
     g2d.setPaint(gradient);
-    g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+    g2d.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
 
-    // Bordure brillante
+    // Draw highlight on top edge
     g2d.setStroke(new BasicStroke(1.5f));
-    g2d.setColor(new Color(255, 255, 255, 50));
-    g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() / 2 - 1, 10, 10);
+    g2d.setColor(new Color(255, 255, 255, isPressed ? 30 : 70));
+    g2d.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 15, 15);
 
-    // Texte
-    g2d.setFont(g2d.getFont().deriveFont(Font.BOLD, 14f));
+    // Draw text
+    String text = getText();
+    g2d.setFont(getFont().deriveFont(Font.BOLD));
     FontMetrics metrics = g2d.getFontMetrics();
     int x = (getWidth() - metrics.stringWidth(text)) / 2;
     int y = ((getHeight() - metrics.getHeight()) / 2) + metrics.getAscent();
 
     if (isPressed) {
-      x += 1;
-      y += 1;
+        x += 1;
+        y += 1;
     }
 
-    // Ombre du texte
+    // Draw text shadow
     g2d.setColor(new Color(0, 0, 0, 100));
     g2d.drawString(text, x + 1, y + 1);
 
-    // Texte principal
+    // Draw main text
     g2d.setColor(textColor);
     g2d.drawString(text, x, y);
 
     g2d.dispose();
+  }
+
+  @Override
+  public void setBackground(Color color) {
+    this.backgroundColor = color;
+    this.hoverColor = new Color(
+        Math.min(255, (int)(color.getRed() * 0.9)),
+        Math.min(255, (int)(color.getGreen() * 0.9)),
+        Math.min(255, (int)(color.getBlue() * 0.9)));
+    this.pressedColor = new Color(
+        Math.max(0, (int)(color.getRed() * 0.8)),
+        Math.max(0, (int)(color.getGreen() * 0.8)),
+        Math.max(0, (int)(color.getBlue() * 0.8)));
+    repaint();
   }
 
   public void setText(String text) {
@@ -113,19 +129,6 @@ public class Button extends Component {
 
   public String getText() {
     return text;
-  }
-
-  public void setBackgroundColor(Color color) {
-    this.backgroundColor = color;
-    this.hoverColor = new Color(
-        Math.min(255, color.getRed() + 15),
-        Math.min(255, color.getGreen() + 15),
-        Math.min(255, color.getBlue() + 15));
-    this.pressedColor = new Color(
-        Math.max(0, color.getRed() - 15),
-        Math.max(0, color.getGreen() - 15),
-        Math.max(0, color.getBlue() - 15));
-    repaint();
   }
 
   public void setTextColor(Color color) {

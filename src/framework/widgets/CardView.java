@@ -34,9 +34,20 @@ public class CardView extends Component {
   public CardView(Card card) {
     super("CardView");
     this.card = card;
+    // Set initial size based on window size
     setSize(80, 120);
     setupEventListener();
     loadCardImage();
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    // Ensure minimum size while allowing scaling
+    int minWidth = 60;
+    int minHeight = 90;
+    int newWidth = Math.max(width, minWidth);
+    int newHeight = Math.max(height, minHeight);
+    super.setBounds(x, y, newWidth, newHeight);
   }
 
   private void loadCardImage() {

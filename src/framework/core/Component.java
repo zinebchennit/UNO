@@ -1,20 +1,26 @@
 package framework.core;
 
-import javax.swing.JComponent;
-import java.util.ArrayList;
-import java.util.List;
-import java.awt.event.MouseAdapter;
 import framework.events.EventListener;
 import framework.events.MouseEvent;
+import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JComponent;
 
-public abstract class Component extends JComponent {
+public class Component extends JComponent {
     private final List<EventListener> listeners = new ArrayList<>();
     private String name;
 
     public Component(String name) {
         super();
         this.name = name;
+        setOpaque(false);
         setupMouseListener();
+    }
+
+    public Component() {
+        setOpaque(false);
     }
 
     private void setupMouseListener() {
@@ -63,5 +69,10 @@ public abstract class Component extends JComponent {
         for (EventListener listener : listeners) {
             listener.onMouseRelease(event);
         }
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
     }
 }

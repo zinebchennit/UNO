@@ -34,6 +34,46 @@ public class Window extends JFrame {
     rootContainer.setBounds(0, 0, width, height);
     setContentPane(rootContainer);
     System.out.println("Root container configuré");
+
+    // Add window resize listener
+    addComponentListener(new java.awt.event.ComponentAdapter() {
+      @Override
+      public void componentResized(java.awt.event.ComponentEvent e) {
+        rootContainer.setBounds(0, 0, getWidth(), getHeight());
+        rootContainer.revalidate();
+        rootContainer.repaint();
+        
+        // Notify all components about the resize
+        notifyComponentsResized(getWidth(), getHeight());
+      }
+    });
+  }
+
+  private void notifyComponentsResized(int width, int height) {
+    for (Component child : rootContainer.getChildren()) {
+      if (child instanceof Container) {
+        Container container = (Container) child;
+        container.setBounds(0, 0, width, height);
+        // Update child panels of mainPanel
+        for (Component mainChild : container.getChildren()) {
+          if (mainChild instanceof Container) {
+            Container subContainer = (Container) mainChild;
+            String name = subContainer.getName();
+            if (name != null) {
+              if (name.equals("computerPanel")) {
+                subContainer.setBounds(0, 0, width, height / 4);
+              } else if (name.equals("gamePanel")) {
+                subContainer.setBounds(width / 4, height / 4, width / 2, height / 2);
+              } else if (name.equals("playerPanel")) {
+                subContainer.setBounds(0, height * 3 / 4, width, height / 4);
+              }
+            }
+          }
+        }
+        container.revalidate();
+        container.repaint();
+      }
+    }
   }
 
   public Container getRootContainer() {
