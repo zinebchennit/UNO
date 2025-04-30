@@ -22,8 +22,10 @@ public class UnoGame {
     private Window window;
     private Panel mainPanel;
     private Panel menuPanel;
-    private Panel playerPanel;
-    private Panel computerPanel;
+    private Panel playerPanel; // South
+    private Panel computerPanel; // North (or opponent 1)
+    private Panel leftPlayerPanel; // West (opponent 2)
+    private Panel rightPlayerPanel; // East (opponent 3)
     private Panel gamePanel;
     private Game game;
     private Button startSoloButton;
@@ -49,10 +51,8 @@ public class UnoGame {
         window.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
-                if (game != null) {
-                    updateGameView();
-                }
-                updatePanelLayouts();
+                updatePanelLayouts(); // Update layouts on resize
+                updateGameView(); // Redraw game elements after resize
             }
         });
 
@@ -70,8 +70,8 @@ public class UnoGame {
             
             File imageFile = new File(imagePath);
             if (!imageFile.exists()) {
-                System.err.println("Le fichier image n'existe pas : " + imagePath);
-                return;
+                System.err.println("Erreur : Fichier image non trouvé à " + imagePath);
+                return; // Stop if logo is missing
             }
             
             Image logoImage = ImageIO.read(imageFile);
@@ -117,21 +117,20 @@ public class UnoGame {
             window.addComponentListener(new java.awt.event.ComponentAdapter() {
                 @Override
                 public void componentResized(java.awt.event.ComponentEvent e) {
-                    int newCenterY = (window.getHeight() - (logoHeight + 120)) / 2;
-                    // Update logo position
-                    logoPanel.setBounds((window.getWidth() - logoWidth) / 2,
-                                      newCenterY,
-                                      logoWidth, logoHeight);
-                    
-                    // Update buttons position
-                    startSoloButton.setBounds((window.getWidth() - buttonWidth) / 2,
+                    // Reposition logo and buttons on resize
+                    int newWidth = window.getWidth();
+                    int newHeight = window.getHeight();
+                    menuPanel.setBounds(0, 0, newWidth, newHeight); // Resize menu panel
+
+                    int newCenterY = (newHeight - (logoHeight + 120)) / 2;
+                    logoPanel.setBounds((newWidth - logoWidth) / 2, newCenterY, logoWidth, logoHeight);
+
+                    startSoloButton.setBounds((newWidth - buttonWidth) / 2,
                                             logoPanel.getY() + logoHeight + spacing,
                                             buttonWidth, buttonHeight);
-                    
-                    startMultiButton.setBounds((window.getWidth() - buttonWidth) / 2,
+                    startMultiButton.setBounds((newWidth - buttonWidth) / 2,
                                              startSoloButton.getY() + buttonHeight + spacing,
                                              buttonWidth, buttonHeight);
-                    
                     menuPanel.revalidate();
                     menuPanel.repaint();
                 }
@@ -149,19 +148,18 @@ public class UnoGame {
         startSoloButton.addEventListener(new EventListener() {
             @Override
             public void onMouseEnter(MouseEvent event) {
-                startSoloButton.setBackground(new Color(41, 128, 185));
-                startSoloButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+                startSoloButton.setBackground(new Color(220, 220, 220)); // Slightly darker on hover
             }
 
             @Override
             public void onMouseExit(MouseEvent event) {
-                startSoloButton.setBackground(new Color(52, 152, 219));
+                startSoloButton.setBackground(new Color(240, 240, 240)); // Back to original
             }
 
             @Override
             public void onMouseClick(MouseEvent event) {
-                startNewGame(1, 1);
-                showGameScreen();
+                System.out.println("Solo button clicked");
+                startNewGame();
             }
 
             @Override
@@ -174,17 +172,17 @@ public class UnoGame {
         startMultiButton.addEventListener(new EventListener() {
             @Override
             public void onMouseEnter(MouseEvent event) {
-                startMultiButton.setBackground(new Color(192, 57, 43));
-                startMultiButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+                startMultiButton.setBackground(new Color(220, 220, 220)); // Slightly darker on hover
             }
 
             @Override
             public void onMouseExit(MouseEvent event) {
-                startMultiButton.setBackground(new Color(231, 76, 60));
+                startMultiButton.setBackground(new Color(240, 240, 240)); // Back to original
             }
 
             @Override
             public void onMouseClick(MouseEvent event) {
+                System.out.println("Multiplayer button clicked");
                 showPlayerSelectionScreen();
             }
 
@@ -203,40 +201,64 @@ public class UnoGame {
         mainPanel.setVisible(false);
         System.out.println("Main panel créé");
 
-        // Computer panel (top) - 25% of height
-        computerPanel = new Panel("computerPanel");
-        computerPanel.setBounds(0, 0, window.getWidth(), window.getHeight() / 4);
-        computerPanel.setBackground(new Color(0, 100, 0));
-        computerPanel.setOpaque(true);
-        System.out.println("Computer panel créé");
+        // Define panel proportions
+        int playerPanelHeight = window.getHeight() / 4; // North and South panels height
+        int sidePanelWidth = window.getWidth() / 6; // West and East panels width
+        int gamePanelY = playerPanelHeight;
+        int gamePanelHeight = window.getHeight() - (2 * playerPanelHeight);
+        int gamePanelX = sidePanelWidth;
+        int gamePanelWidth = window.getWidth() - (2 * sidePanelWidth);
 
-        // Game panel (center) - 50% of height, wider side margins
-        gamePanel = new Panel("gamePanel");
-        gamePanel.setBounds(window.getWidth() / 6, window.getHeight() / 4, 
-                          window.getWidth() * 2/3, window.getHeight() / 2);
-        gamePanel.setBackground(new Color(0, 100, 0));
-        gamePanel.setOpaque(true);
-        System.out.println("Game panel créé");
 
-        // Player panel (bottom) - 25% of height
+        // Player panel (South) - Bottom 25%
         playerPanel = new Panel("playerPanel");
-        playerPanel.setBounds(0, window.getHeight() * 3/4, 
-                            window.getWidth(), window.getHeight() / 4);
-        playerPanel.setBackground(new Color(0, 100, 0));
+        playerPanel.setBounds(0, window.getHeight() - playerPanelHeight, window.getWidth(), playerPanelHeight);
+        playerPanel.setBackground(new Color(0, 80, 0)); // Slightly different shade
         playerPanel.setOpaque(true);
-        System.out.println("Player panel créé");
+        System.out.println("Player panel (South) créé");
 
-        // Draw button - positioned relative to game panel
+        // Computer panel (North) - Top 25%
+        computerPanel = new Panel("computerPanel");
+        computerPanel.setBounds(0, 0, window.getWidth(), playerPanelHeight);
+        computerPanel.setBackground(new Color(0, 80, 0)); // Slightly different shade
+        computerPanel.setOpaque(true);
+        System.out.println("Computer panel (North) créé");
+
+        // Left Player panel (West) - Left 1/6th, between North and South
+        leftPlayerPanel = new Panel("leftPlayerPanel");
+        leftPlayerPanel.setBounds(0, gamePanelY, sidePanelWidth, gamePanelHeight);
+        leftPlayerPanel.setBackground(new Color(0, 60, 0)); // Darker shade
+        leftPlayerPanel.setOpaque(true);
+        System.out.println("Left player panel (West) créé");
+
+        // Right Player panel (East) - Right 1/6th, between North and South
+        rightPlayerPanel = new Panel("rightPlayerPanel");
+        rightPlayerPanel.setBounds(window.getWidth() - sidePanelWidth, gamePanelY, sidePanelWidth, gamePanelHeight);
+        rightPlayerPanel.setBackground(new Color(0, 60, 0)); // Darker shade
+        rightPlayerPanel.setOpaque(true);
+        System.out.println("Right player panel (East) créé");
+
+        // Game panel (Center) - Fills the middle area
+        gamePanel = new Panel("gamePanel");
+        gamePanel.setBounds(gamePanelX, gamePanelY, gamePanelWidth, gamePanelHeight);
+        gamePanel.setBackground(new Color(0, 100, 0)); // Original green
+        gamePanel.setOpaque(true);
+        System.out.println("Game panel (Center) créé");
+
+
+        // Draw button - positioned relative to game panel (center bottom)
         drawButton = new Button("Piocher");
-        drawButton.setBounds(gamePanel.getWidth() / 2 - 50, gamePanel.getHeight() / 2, 100, 40);
+        // Position will be updated in updateGameView based on game state
         drawButton.setOpaque(true);
         drawButton.setVisible(false);
         System.out.println("Draw button créé");
 
-        mainPanel.addChild(computerPanel);
-        mainPanel.addChild(gamePanel);
-        mainPanel.addChild(playerPanel);
-        mainPanel.addChild(drawButton);
+        mainPanel.addChild(playerPanel); // South
+        mainPanel.addChild(computerPanel); // North
+        mainPanel.addChild(leftPlayerPanel); // West
+        mainPanel.addChild(rightPlayerPanel); // East
+        mainPanel.addChild(gamePanel); // Center (on top of player panels edges)
+        // Draw button added dynamically in updateGameView
         System.out.println("Tous les panels de jeu ajoutés au main panel");
 
         // Initialize player selection panel
@@ -273,48 +295,45 @@ public class UnoGame {
         startGameButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
-                System.out.println("Start Game button clicked!");
                 startMultiplayerGame();
             }
             @Override public void onMousePress(MouseEvent event) {}
             @Override public void onMouseRelease(MouseEvent event) {}
             @Override public void onMouseEnter(MouseEvent event) {
-                startGameButton.setBackground(new Color(39, 174, 96)); // Darker green
+                 startGameButton.setBackground(new Color(39, 174, 96)); // Darker green
             }
             @Override public void onMouseExit(MouseEvent event) {
-                startGameButton.setBackground(new Color(46, 204, 113)); // Original green
+                 startGameButton.setBackground(new Color(46, 204, 113)); // Original green
             }
         });
 
         addPlayerButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
-                System.out.println("Add Player button clicked!");
                 addPlayerField();
             }
             @Override public void onMousePress(MouseEvent event) {}
             @Override public void onMouseRelease(MouseEvent event) {}
             @Override public void onMouseEnter(MouseEvent event) {
-                addPlayerButton.setBackground(new Color(41, 128, 185)); // Darker blue
+                 addPlayerButton.setBackground(new Color(41, 128, 185)); // Darker blue
             }
             @Override public void onMouseExit(MouseEvent event) {
-                addPlayerButton.setBackground(new Color(52, 152, 219)); // Original blue
+                 addPlayerButton.setBackground(new Color(52, 152, 219)); // Original blue
             }
         });
 
         removePlayerButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
-                System.out.println("Remove Player button clicked!");
                 removePlayerField();
             }
             @Override public void onMousePress(MouseEvent event) {}
             @Override public void onMouseRelease(MouseEvent event) {}
             @Override public void onMouseEnter(MouseEvent event) {
-                removePlayerButton.setBackground(new Color(192, 57, 43)); // Darker red
+                 removePlayerButton.setBackground(new Color(192, 57, 43)); // Darker red
             }
             @Override public void onMouseExit(MouseEvent event) {
-                removePlayerButton.setBackground(new Color(231, 76, 60)); // Original red
+                 removePlayerButton.setBackground(new Color(231, 76, 60)); // Original red
             }
         });
 
@@ -347,6 +366,7 @@ public class UnoGame {
         drawButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
+                System.out.println("Draw button clicked");
                 drawCard();
             }
 
@@ -372,20 +392,38 @@ public class UnoGame {
         menuPanel.setVisible(false);
         playerSelectionPanel.setVisible(false);
         mainPanel.setVisible(true);
-        drawButton.setVisible(true);
+        drawButton.setVisible(true); // Initially visible, updateGameView will adjust
     }
 
-    private void startNewGame(int humanPlayers, int computerPlayers) {
-        System.out.println("Starting new game with " + humanPlayers + " humans and " + computerPlayers + " computers");
-        game = new Game(humanPlayers, computerPlayers);
+    private void startNewGame() { // Removed parameters as it's always 1v1
+        System.out.println("Starting new solo game...");
+
+        // Create the list of players for solo mode (1 Human, 1 Computer)
+        List<Player> players = new ArrayList<>();
+        players.add(new HumanPlayer("Player 1")); // Default name for human
+        players.add(new ComputerPlayer("Computer")); // Default name for computer
+
+        // Create the Game instance with the player list
+        game = new Game(players); // Use the correct constructor
+        System.out.println("Game instance created for solo mode.");
+
+        // Initialize the game (deal cards, set top card)
         game.initializeGame();
+        System.out.println("Solo game initialized.");
+
         showGameScreen();
-        drawButton.setVisible(true);
+        // drawButton.setVisible(true); // Visibility handled by updateGameView
         updateGameView();
-        
-        // Vérifier si c'est le tour de l'ordinateur au début du jeu
+
+        // Check if the first player is a computer
         if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-            playComputerTurn();
+            System.out.println("First player is computer, initiating turn...");
+            triggerComputerTurnWithDelay(); // Use helper method
+        } else {
+             System.out.println("First player is human.");
+             // Visibility handled by updateGameView
+             // drawButton.setVisible(true);
+             updateGameView(); // Update view to highlight the human player
         }
     }
 
@@ -393,310 +431,489 @@ public class UnoGame {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof HumanPlayer) {
             // Le joueur humain pioche une carte
-            Card drawnCard = game.drawCard();
+            Card drawnCard = game.drawCard(); // Calls Game.drawCard()
             if (drawnCard != null) {
-                currentPlayer.addCard(drawnCard);
-                updateGameView();
-                
-                // Passer au tour suivant
-                game.moveToNextPlayer();
-                
-                // Si c'est maintenant le tour de l'ordinateur, le faire jouer
-                if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                    playComputerTurn();
+                System.out.println(currentPlayer.getName() + " drew a card: " + drawnCard);
+                updateGameView(); // Update view to show the new card
+                // Check if the drawn card is playable
+                // Use the Card's canPlayOn method and get the top card from Game
+                if (!drawnCard.canPlayOn(game.getCurrentTopCard())) {
+                    System.out.println("Drawn card is not playable. Ending turn.");
+                    // Use moveToNextPlayer instead of nextTurn
+                    game.moveToNextPlayer(); // End turn if drawn card is not playable
+                    updateGameView();
+                    // Check if the next player is a computer
+                    if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                        triggerComputerTurnWithDelay();
+                    }
+                } else {
+                    System.out.println("Drawn card is playable. Player can choose to play it or keep it.");
+                    // The player can now click the drawn card to play it, or draw again (if allowed by rules)
+                    // Or potentially a "pass" button could be added if rules allow keeping the card and passing
                 }
             } else {
-                // Si le deck est vide, afficher un message
-                javax.swing.JOptionPane.showMessageDialog(window, 
-                    "Le deck est vide!", 
-                    "Pioche impossible", 
-                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                System.out.println("Deck is empty, cannot draw.");
+                // Handle empty deck scenario if necessary
             }
         }
     }
 
     private void updatePanelLayouts() {
-        if (mainPanel != null) {
-            // Update main panel
+        if (mainPanel != null && mainPanel.isVisible()) { // Only update if visible
+            // Update main panel size first
             mainPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
 
-            // Update computer panel (25% of height, increased from 20%)
-            computerPanel.setBounds(0, 0, window.getWidth(), window.getHeight() * 1/4);
+            // Define panel proportions based on current window size
+            int playerPanelHeight = window.getHeight() / 4; // North and South panels height
+            int sidePanelWidth = window.getWidth() / 6; // West and East panels width
+            int gamePanelY = playerPanelHeight;
+            int gamePanelHeight = window.getHeight() - (2 * playerPanelHeight);
+            int gamePanelX = sidePanelWidth;
+            int gamePanelWidth = window.getWidth() - (2 * sidePanelWidth);
 
-            // Update game panel (50% of height, reduced from 60%)
-            // and increase side margins (from 1/8 to 1/6 of width)
-            gamePanel.setBounds(window.getWidth() / 6, window.getHeight() / 4,
-                              window.getWidth() * 2/3, window.getHeight() / 2);
+            // Update Player panel (South)
+            playerPanel.setBounds(0, window.getHeight() - playerPanelHeight, window.getWidth(), playerPanelHeight);
 
-            // Update player panel (25% of height, increased from 20%)
-            playerPanel.setBounds(0, window.getHeight() * 3/4,
-                                window.getWidth(), window.getHeight() / 4);
+            // Update Computer panel (North)
+            computerPanel.setBounds(0, 0, window.getWidth(), playerPanelHeight);
 
-            // Update draw button position
-            if (drawButton.isVisible()) {
-                drawButton.setBounds(gamePanel.getWidth() / 2 - 50, gamePanel.getHeight() / 2, 100, 40);
-            }
+            // Update Left Player panel (West)
+            leftPlayerPanel.setBounds(0, gamePanelY, sidePanelWidth, gamePanelHeight);
 
-            // Force repaint of all panels
+            // Update Right Player panel (East)
+            rightPlayerPanel.setBounds(window.getWidth() - sidePanelWidth, gamePanelY, sidePanelWidth, gamePanelHeight);
+
+            // Update Game panel (Center)
+            gamePanel.setBounds(gamePanelX, gamePanelY, gamePanelWidth, gamePanelHeight);
+
+            // Re-position elements within gamePanel (like top card and draw button) if needed
+            // This is handled by updateGameView which should be called after resize
+
+            // Force revalidation and repaint of all affected panels
             mainPanel.revalidate();
             mainPanel.repaint();
-            computerPanel.revalidate();
-            computerPanel.repaint();
-            gamePanel.revalidate();
-            gamePanel.repaint();
-            playerPanel.revalidate();
-            playerPanel.repaint();
+            // Individual panel repaint might not be strictly necessary if mainPanel repaint covers it
+            // playerPanel.revalidate(); playerPanel.repaint();
+            // computerPanel.revalidate(); computerPanel.repaint();
+            // leftPlayerPanel.revalidate(); leftPlayerPanel.repaint();
+            // rightPlayerPanel.revalidate(); rightPlayerPanel.repaint();
+            // gamePanel.revalidate(); gamePanel.repaint();
+        }
+         // Update menu panel layout if it's visible
+        if (menuPanel != null && menuPanel.isVisible()) {
+             menuPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
+             // Reposition menu elements (logo, buttons) - This part seems handled by the existing resize listener in initializeUI
+             menuPanel.revalidate();
+             menuPanel.repaint();
+        }
+         // Update player selection panel layout if it's visible
+        if (playerSelectionPanel != null && playerSelectionPanel.isVisible()) {
+             playerSelectionPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
+             // Reposition player selection elements (title, fields, buttons)
+             // Example: reposition title
+             framework.core.Component title = playerSelectionPanel.getChildren().get(0); // Assuming title is first
+             if (title instanceof Label) {
+                 title.setBounds(window.getWidth() / 2 - 100, 50, 200, 30);
+             }
+             // Reposition player fields and buttons similarly... (This might need more detailed logic)
+             // For now, just revalidate
+             playerSelectionPanel.revalidate();
+             playerSelectionPanel.repaint();
         }
     }
 
     private void updateGameView() {
-        System.out.println("=== Updating Game View ===");
+        System.out.println("=== Updating Game View (Multiplayer Layout) ===");
         try {
-            // Clear all panels
-            gamePanel.removeAll();
-            playerPanel.removeAll();
-            computerPanel.removeAll();
+            // Clear all panels first
+            gamePanel.removeAll(); // Clear central panel (top card, draw button)
+            playerPanel.removeAll(); // South
+            computerPanel.removeAll(); // North
+            leftPlayerPanel.removeAll(); // West
+            rightPlayerPanel.removeAll(); // East
 
             if (game == null) {
-                System.err.println("ERROR: Game is null!");
+                System.out.println("Game not initialized, cannot update view.");
                 return;
             }
 
-            // Display top card
-            Card topCard = game.getCurrentTopCard();
-            if (topCard != null) {
-                System.out.println("Displaying top card: " + topCard);
-                CardView topCardView = new CardView(topCard);
-                int cardWidth = 100;
-                int cardHeight = 150;
-                int topCardX = (gamePanel.getWidth() - cardWidth) / 2;
-                int topCardY = (gamePanel.getHeight() - cardHeight) / 2;
-                topCardView.setBounds(topCardX, topCardY, cardWidth, cardHeight);
-                topCardView.setFaceUp(true);
-                gamePanel.addChild(topCardView);
+            List<Player> players = game.getPlayers();
+            int numPlayers = players.size();
+            if (players == null || numPlayers == 0) {
+                System.out.println("No players in the game, cannot update view.");
+                return;
             }
 
-            // Add draw button to game panel
-            drawButton.setBounds(gamePanel.getWidth() / 2 + 100, gamePanel.getHeight() / 2, 100, 40);
+            // --- Determine Player Positions ---
+            int humanPlayerIndex = -1;
+            for (int i = 0; i < numPlayers; i++) {
+                if (players.get(i) instanceof HumanPlayer) {
+                    humanPlayerIndex = i;
+                    break; // Assume only one human player for now
+                }
+            }
+            // If no human player (e.g., all computer game), default to player 0 as South.
+            if (humanPlayerIndex == -1) {
+                humanPlayerIndex = 0; // Or handle error if a human is required
+                System.out.println("Warning: No human player found, defaulting player 0 to South panel.");
+            }
+
+            // --- Display Top Card and Draw Button in Game Panel ---
+            Card topCard = game.getCurrentTopCard();
+            if (topCard != null) {
+                CardView topCardView = new CardView(topCard);
+                int cardWidth = 70;
+                int cardHeight = 105;
+                // Position top card in the center-left of the game panel
+                topCardView.setBounds(
+                    gamePanel.getWidth() / 2 - cardWidth - 10, // Left of center
+                    (gamePanel.getHeight() - cardHeight) / 2,
+                    cardWidth, cardHeight
+                );
+                topCardView.setFaceUp(true);
+                gamePanel.addChild(topCardView);
+                System.out.println("Top card displayed: " + topCard);
+            } else {
+                System.out.println("No top card to display.");
+            }
+
+            // Add draw button to game panel - Position near the bottom center of game panel
+            int drawButtonWidth = 100;
+            int drawButtonHeight = 40;
+            drawButton.setBounds(
+                (gamePanel.getWidth() - drawButtonWidth) / 2,
+                gamePanel.getHeight() - drawButtonHeight - 20, // Positioned at the bottom
+                drawButtonWidth, drawButtonHeight
+            );
+            // Only visible if it's a human player's turn
             drawButton.setVisible(game.getCurrentPlayer() instanceof HumanPlayer);
             gamePanel.addChild(drawButton);
 
-            // Display players and their cards
-            List<Player> players = game.getPlayers();
-            if (players == null || players.isEmpty()) {
-                System.err.println("ERROR: No players in game!");
-                return;
-            }
 
-            for (Player player : players) {
-                Panel targetPanel = player instanceof HumanPlayer ? playerPanel : computerPanel;
-                
-                // Add player name with visual effect for current player
-                Label nameLabel = new Label(player.getName());
-                nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
-                
-                // Highlight current player's name
-                if (player == game.getCurrentPlayer()) {
-                    nameLabel.setTextColor(new Color(255, 255, 0)); // Yellow color for current player
-                    nameLabel.setFont(new Font("Arial", Font.BOLD, 18)); // Slightly larger font
-                } else {
-                    nameLabel.setTextColor(Color.WHITE);
+            // --- Display Players and Cards in Respective Panels ---
+            for (int i = 0; i < numPlayers; i++) {
+                // Calculate the actual player index based on the human player's position
+                int playerIndex = (humanPlayerIndex + i) % numPlayers;
+                Player player = players.get(playerIndex);
+                List<Card> cards = player.getHand();
+
+                Panel targetPanel;
+                boolean isVerticalLayout;
+
+                // Assign player to panel based on relative position to human (i)
+                switch (i) {
+                    case 0: // Human player (or player 0 if no human)
+                        targetPanel = playerPanel; // South
+                        isVerticalLayout = false;
+                        break;
+                    case 1: // Player to the left of human
+                        targetPanel = (numPlayers == 2) ? computerPanel : rightPlayerPanel; // North (2p) or East (3+p)
+                        isVerticalLayout = (numPlayers > 2); // Vertical only if 3+ players
+                        break;
+                    case 2: // Player across from human (or next if 3p)
+                        targetPanel = (numPlayers == 3) ? leftPlayerPanel : computerPanel; // West (3p) or North (4p)
+                        isVerticalLayout = (numPlayers == 3); // Vertical only if 3 players
+                        break;
+                    case 3: // Player to the right of human (only in 4p)
+                        targetPanel = leftPlayerPanel; // West
+                        isVerticalLayout = true;
+                        break;
+                    default:
+                        System.err.println("Warning: More than 4 players detected, skipping display for player index " + playerIndex);
+                        continue; // Skip players beyond 4
                 }
-                
-                nameLabel.setBounds(10, 10, 200, 20);
+
+                System.out.println("Assigning Player " + player.getName() + " (Index " + playerIndex + ", Relative " + i + ") to Panel: " + targetPanel.getName());
+
+                // Add player name label
+                Label nameLabel = new Label(player.getName() + " (" + cards.size() + ")");
+                nameLabel.setTextColor(Color.WHITE);
+                nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+                if (isVerticalLayout) {
+                    nameLabel.setBounds(10, 5, targetPanel.getWidth() - 20, 20); // Top of vertical panel
+                } else if (targetPanel == playerPanel) {
+                    nameLabel.setBounds(10, 5, targetPanel.getWidth() - 20, 20); // Top of South panel
+                } else { // computerPanel (North)
+                    nameLabel.setBounds(10, targetPanel.getHeight() - 25, targetPanel.getWidth() - 20, 20); // Bottom of North panel
+                }
                 targetPanel.addChild(nameLabel);
 
-                // Display cards
-                List<Card> cards = player.getHand();
-                
-                // Calculate card layout
-                int cardWidth = 80;
-                int cardHeight = 120;
-                int spacing = 30;
-                int totalWidth = (cards.size() * cardWidth) - ((cards.size() - 1) * spacing);
-                int startX = (targetPanel.getWidth() - totalWidth) / 2;
-                int startY = (targetPanel.getHeight() - cardHeight) / 2;
-
-                for (int i = 0; i < cards.size(); i++) {
-                    Card card = cards.get(i);
-                    if (card == null) continue;
-
-                    CardView cardView = new CardView(card);
-                    cardView.setBounds(
-                        startX + (i * (cardWidth - spacing)),
-                        startY,
-                        cardWidth,
-                        cardHeight
-                    );
-                    // Afficher les cartes face cachée pour l'ordinateur
-                    cardView.setFaceUp(player instanceof HumanPlayer);
-                    
-                    if (player instanceof HumanPlayer) {
-                        final int cardIndex = i;
-                        cardView.addCardClickListener(new CardView.CardClickListener() {
-                            @Override
-                            public void onCardClicked(CardView cv) {
-                                handleCardClick(cv);
-                            }
-                        });
-                    }
-                    
-                    targetPanel.addChild(cardView);
+                // Highlight current player
+                if (player == game.getCurrentPlayer()) {
+                    nameLabel.setTextColor(Color.YELLOW); // Highlight current player's name
+                    // Optionally add a border or background change to the panel
+                    // targetPanel.setBorder(javax.swing.BorderFactory.createLineBorder(Color.YELLOW, 2));
+                } else {
+                    // targetPanel.setBorder(null); // Remove border if not current player
                 }
-            }
 
-            // Force repaint
+
+            // Display cards - Use a helper method for layout flexibility
+            // Only show cards face up if it's a Human player AND they are in the playerPanel (South)
+            boolean showFaceUp = (player instanceof HumanPlayer && targetPanel == playerPanel);
+            layoutCards(targetPanel, cards, showFaceUp, isVerticalLayout, player == game.getCurrentPlayer());
+
+        } // End player loop
+
+            // Force repaint of all panels involved
             mainPanel.revalidate();
             mainPanel.repaint();
-            gamePanel.revalidate();
-            gamePanel.repaint();
-            playerPanel.revalidate();
-            playerPanel.repaint();
-            computerPanel.revalidate();
-            computerPanel.repaint();
-            
+            // gamePanel.revalidate(); gamePanel.repaint(); // Might be covered by mainPanel
+            // playerPanel.revalidate(); playerPanel.repaint();
+            // computerPanel.revalidate(); computerPanel.repaint();
+            // leftPlayerPanel.revalidate(); leftPlayerPanel.repaint();
+            // rightPlayerPanel.revalidate(); rightPlayerPanel.repaint();
+
         } catch (Exception e) {
             System.err.println("ERROR: Failed to update game view");
             e.printStackTrace();
         }
     }
 
+    // Helper method to layout cards within a panel
+    private void layoutCards(Panel targetPanel, List<Card> cards, boolean faceUp, boolean isVertical, boolean isCurrentPlayer) {
+        if (cards.isEmpty()) return;
+
+        int cardWidth = 70; // Default card width
+        int cardHeight = 105; // Default card height
+        int overlap; // Overlap amount depends on layout and card count
+
+        int panelWidth = targetPanel.getWidth();
+        int panelHeight = targetPanel.getHeight();
+        int numCards = cards.size();
+
+        // Calculate available space, leaving some padding
+        int availableWidth = panelWidth - 40; // 20px padding each side
+        int availableHeight = panelHeight - 60; // 30px padding top/bottom (adjust for name label)
+
+        if (isVertical) {
+            // Vertical layout (West/East panels)
+            cardWidth = Math.min(60, availableWidth); // Smaller cards for vertical, fit width
+            cardHeight = (int) (cardWidth * 1.5); // Maintain aspect ratio
+            overlap = cardHeight / 2; // Overlap by half
+
+            // Calculate total height and adjust overlap if needed
+            int totalHeight = cardHeight + (numCards - 1) * (cardHeight - overlap);
+            if (totalHeight > availableHeight && numCards > 1) {
+                // Reduce overlap to fit cards vertically
+                overlap = cardHeight - (availableHeight - cardHeight) / (numCards - 1);
+                overlap = Math.max(10, overlap); // Ensure minimum visibility
+                totalHeight = cardHeight + (numCards - 1) * (cardHeight - overlap);
+            }
+
+            int startX = (panelWidth - cardWidth) / 2; // Center horizontally
+            int startY = (panelHeight - totalHeight) / 2; // Center vertically
+            startY = Math.max(30, startY); // Ensure space for name label at top
+
+            for (int i = 0; i < numCards; i++) {
+                Card card = cards.get(i);
+                CardView cardView = new CardView(card);
+                cardView.setBounds(startX, startY + i * (cardHeight - overlap), cardWidth, cardHeight);
+                cardView.setFaceUp(faceUp); // Use passed faceUp value
+                targetPanel.addChild(cardView);
+                // No click listener for opponent cards
+            }
+
+        } else {
+            // Horizontal layout (North/South panels)
+            overlap = cardWidth / 2; // Overlap by half
+
+            // Calculate total width and adjust overlap if needed
+            int totalWidth = cardWidth + (numCards - 1) * (cardWidth - overlap);
+            if (totalWidth > availableWidth && numCards > 1) {
+                // Reduce overlap to fit cards horizontally
+                overlap = cardWidth - (availableWidth - cardWidth) / (numCards - 1);
+                overlap = Math.max(10, overlap); // Ensure minimum visibility
+                totalWidth = cardWidth + (numCards - 1) * (cardWidth - overlap);
+            }
+
+            int startX = (panelWidth - totalWidth) / 2; // Center horizontally
+            int startY;
+            if (targetPanel == playerPanel) { // South panel (Human)
+                startY = 30; // Position near top, below name label
+            } else { // North panel (Opponent)
+                startY = panelHeight - cardHeight - 30; // Position near bottom, above name label
+            }
+            startY = Math.max(5, Math.min(startY, panelHeight - cardHeight - 5)); // Clamp within bounds
+
+
+            for (int i = 0; i < numCards; i++) {
+                Card card = cards.get(i);
+                CardView cardView = new CardView(card);
+                cardView.setBounds(startX + i * (cardWidth - overlap), startY, cardWidth, cardHeight);
+                cardView.setFaceUp(faceUp); // Use passed faceUp value
+
+                // Add click listener ONLY to the human player's cards IF it's their turn
+                if (faceUp && targetPanel == playerPanel && isCurrentPlayer) {
+                    cardView.addEventListener(new EventListener() {
+                        @Override
+                        public void onMouseClick(MouseEvent event) {
+                            handleCardClick(cardView);
+                        }
+                        // Implement other mouse events if needed (hover effects, etc.)
+                        @Override public void onMousePress(MouseEvent event) {}
+                        @Override public void onMouseRelease(MouseEvent event) {}
+                        @Override public void onMouseEnter(MouseEvent event) {
+                             // Optional: Add hover effect like a border
+                             cardView.setBorder(javax.swing.BorderFactory.createLineBorder(Color.YELLOW, 2));
+                        }
+                        @Override public void onMouseExit(MouseEvent event) {
+                             cardView.setBorder(null); // Remove border on exit
+                        }
+                    });
+                }
+                targetPanel.addChild(cardView);
+            }
+        }
+    }
+
+
     private void handleCardClick(CardView cardView) {
         Player currentPlayer = game.getCurrentPlayer();
-        if (currentPlayer instanceof HumanPlayer) {
+        // Ensure it's the human player's turn AND the card belongs to them
+        if (currentPlayer instanceof HumanPlayer && playerPanel.isAncestorOf(cardView)) {
             List<Card> playerCards = currentPlayer.getHand();
-            int cardIndex = playerCards.indexOf(cardView.getCard());
-            
-            if (cardIndex != -1) {
-                Card selectedCard = playerCards.get(cardIndex);
-                Card topCard = game.getCurrentTopCard();
-                
-                if (selectedCard.canPlayOn(topCard)) {
-                    if (game.playCard(cardIndex)) {
-                        // Mettre à jour l'affichage après avoir joué la carte
-                        updateGameView();
-                        
-                        // Vérifier si le jeu est terminé
-                        if (game.isGameOver()) {
-                            announceWinner();
-                            return;
-                        }
-                        
-                        // Forcer le tour de l'ordinateur
+            int cardIndex = playerCards.indexOf(cardView.getCard()); // Find the card in the player's hand
+
+            if (cardIndex != -1) { // Card found in hand
+                Card clickedCard = playerCards.get(cardIndex);
+                System.out.println("Human player clicked: " + clickedCard);
+
+                // Attempt to play the card using the Game logic
+                // Pass the index, not the card object
+                if (game.playCard(cardIndex)) {
+                    System.out.println("Card played successfully.");
+                    updateGameView(); // Update the view after playing
+
+                    // Check for game over
+                    if (game.isGameOver()) {
+                        announceWinner();
+                    } else {
+                        // If game not over, check if the next player is a computer
                         if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                            // Utiliser SwingUtilities.invokeLater pour éviter le blocage de l'interface
-                            javax.swing.SwingUtilities.invokeLater(() -> {
-                                try {
-                                    Thread.sleep(1000); // Délai pour voir l'action
-                                    playComputerTurn();
-                                    if (game.isGameOver()) {
-                                        announceWinner();
-                                    }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                            triggerComputerTurnWithDelay(); // Start computer's turn after a delay
+                        } else {
+                             updateGameView(); // Ensure view updates for next human player if any
                         }
                     }
                 } else {
-                    javax.swing.JOptionPane.showMessageDialog(
-                        window,
-                        "Carte invalide! Vous ne pouvez pas jouer cette carte.",
-                        "Carte invalide",
-                        javax.swing.JOptionPane.WARNING_MESSAGE
-                    );
+                    System.out.println("Card cannot be played.");
+                    // Optionally provide feedback to the user (e.g., shake the card view)
+                     javax.swing.JOptionPane.showMessageDialog(window, "You cannot play this card.", "Invalid Move", javax.swing.JOptionPane.WARNING_MESSAGE);
                 }
+            } else {
+                System.err.println("Error: Clicked card not found in player's hand?");
             }
         }
     }
 
     private void playComputerTurn() {
+        if (game.isGameOver()) {
+            System.out.println("Computer turn skipped: Game is over.");
+            return;
+        }
+
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof ComputerPlayer) {
-            System.out.println("Tour de l'ordinateur: " + currentPlayer.getName());
-            boolean played = game.playComputerCard();
-            
-            if (!played) {
-                // Si l'ordinateur ne peut pas jouer, il pioche une carte
-                currentPlayer.addCard(game.drawCard());
-                // Mettre à jour l'interface
-                updateGameView();
-                // Passer au joueur suivant
-                game.moveToNextPlayer();
-            } else {
-                // Mettre à jour l'interface après avoir joué
-                updateGameView();
-                // Passer au joueur suivant après que l'ordinateur a joué
-                game.moveToNextPlayer();
-            }
+            System.out.println("--- Starting computer turn: " + currentPlayer.getName() + " ---");
 
-            System.out.println("Tour de l'ordinateur terminé");
+            // Use the Game's method which handles logic and turn progression
+            boolean actionTaken = game.playComputerCard(); // Store result
+
+            System.out.println("Computer " + currentPlayer.getName() + " action completed. Action taken: " + actionTaken);
+
+            // Update the view AFTER the computer has played/drawn
+            updateGameView();
+
+            // Check for game over AFTER the computer's turn
+            if (game.isGameOver()) {
+                announceWinner();
+            } else {
+                // Check if the NEXT player is also a computer
+                if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                    System.out.println("Next player is also a computer, triggering their turn.");
+                    triggerComputerTurnWithDelay(); // Chain computer turns
+                } else {
+                    System.out.println("Next player is human.");
+                    updateGameView(); // Ensure view is updated for human player
+                }
+            }
+        } else {
+            System.err.println("Error: playComputerTurn called when current player is not a ComputerPlayer.");
         }
     }
 
     private void announceWinner() {
         String winner = null;
         for (Player player : game.getPlayers()) {
-            if (player.getHandSize() == 0) {
+            if (player.getHand().isEmpty()) {
                 winner = player.getName();
                 break;
             }
         }
         if (winner != null) {
-            javax.swing.JOptionPane.showMessageDialog(
-                window,
-                winner + " a gagné la partie!",
-                "Fin de la partie",
-                javax.swing.JOptionPane.INFORMATION_MESSAGE
-            );
+            System.out.println("Game Over! Winner: " + winner);
+             javax.swing.JOptionPane.showMessageDialog(window, "Game Over!\nWinner: " + winner, "Game Over", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            // Optionally disable game interactions or return to menu
+            // drawButton.setEnabled(false); // Example
+        } else {
+             System.out.println("Game Over called but no winner found?"); // Should not happen if isGameOver is true
         }
     }
 
     private void addPlayerField() {
         if (playerNameFields.size() >= maxPlayers) {
+             javax.swing.JOptionPane.showMessageDialog(window, "Maximum number of players (" + maxPlayers + ") reached.", "Max Players", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int index = playerNameFields.size();
-        
+
         // Create a panel for each player's settings
-        Panel playerSettingsPanel = new Panel();
+        Panel playerSettingsPanel = new Panel(); // No specific name needed here
         playerSettingsPanel.setBounds(
             window.getWidth() / 2 - 200,
-            150 + index * 100,
-            400,
-            80
+            150 + index * 100, // Position vertically based on index
+            400, // Width of the settings panel
+            80 // Height of the settings panel
         );
+        playerSettingsPanel.setOpaque(false); // Make background transparent
 
         // Add player name field
         TextField field = new TextField("Player " + (index + 1));
-        field.setBounds(0, 0, 200, 40);
-        playerNameFields.add(field);
+        field.setBounds(0, 0, 200, 40); // Position within the settings panel
+        playerNameFields.add(field); // Add to the list for later retrieval
         playerSettingsPanel.addChild(field);
 
-        // Add player type selection
+        // Add player type selection (Human/Computer buttons)
         Button humanButton = new Button("Human");
         humanButton.setBounds(210, 0, 90, 40);
-        humanButton.setBackground(new Color(52, 152, 219));
+        humanButton.setBackground(new Color(52, 152, 219)); // Blue
         humanButton.setTextColor(Color.WHITE);
-        humanButton.setSelected(true);
+        humanButton.setSelected(index == 0); // Select Human by default only for the first player
 
         Button computerButton = new Button("Computer");
         computerButton.setBounds(310, 0, 90, 40);
-        computerButton.setBackground(new Color(231, 76, 60));
+        computerButton.setBackground(new Color(231, 76, 60)); // Red
         computerButton.setTextColor(Color.WHITE);
+        computerButton.setSelected(index != 0); // Select Computer by default for others
 
-        // Add click listeners to handle selection
+        // Group buttons logically (though not strictly necessary with current framework)
+        // ButtonGroup typeGroup = new ButtonGroup(); // Conceptual grouping
+        // typeGroup.add(humanButton);
+        // typeGroup.add(computerButton);
+
+        // Add click listeners to handle selection state
         humanButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
                 humanButton.setSelected(true);
                 computerButton.setSelected(false);
+                // Update appearance if needed (e.g., border, background)
+                humanButton.setBackground(new Color(41, 128, 185)); // Darker selected blue
+                computerButton.setBackground(new Color(231, 76, 60)); // Normal red
             }
-            @Override public void onMousePress(MouseEvent event) {}
-            @Override public void onMouseRelease(MouseEvent event) {}
-            @Override public void onMouseEnter(MouseEvent event) {}
-            @Override public void onMouseExit(MouseEvent event) {}
+             @Override public void onMousePress(MouseEvent event) {} @Override public void onMouseRelease(MouseEvent event) {} @Override public void onMouseEnter(MouseEvent event) {} @Override public void onMouseExit(MouseEvent event) {}
         });
 
         computerButton.addEventListener(new EventListener() {
@@ -704,39 +921,74 @@ public class UnoGame {
             public void onMouseClick(MouseEvent event) {
                 computerButton.setSelected(true);
                 humanButton.setSelected(false);
+                // Update appearance
+                computerButton.setBackground(new Color(192, 57, 43)); // Darker selected red
+                humanButton.setBackground(new Color(52, 152, 219)); // Normal blue
             }
-            @Override public void onMousePress(MouseEvent event) {}
-            @Override public void onMouseRelease(MouseEvent event) {}
-            @Override public void onMouseEnter(MouseEvent event) {}
-            @Override public void onMouseExit(MouseEvent event) {}
+             @Override public void onMousePress(MouseEvent event) {} @Override public void onMouseRelease(MouseEvent event) {} @Override public void onMouseEnter(MouseEvent event) {} @Override public void onMouseExit(MouseEvent event) {}
         });
+
+        // Set initial selected appearance
+        if (humanButton.isSelected()) humanButton.setBackground(new Color(41, 128, 185));
+        if (computerButton.isSelected()) computerButton.setBackground(new Color(192, 57, 43));
+
 
         playerSettingsPanel.addChild(humanButton);
         playerSettingsPanel.addChild(computerButton);
 
+        // Add the whole settings panel to the main player selection panel
         playerSelectionPanel.addChild(playerSettingsPanel);
         playerSelectionPanel.revalidate();
         playerSelectionPanel.repaint();
 
-        updatePlayerButtons();
+        updatePlayerButtons(); // Enable/disable Add/Remove buttons
     }
 
     private void removePlayerField() {
-        if (playerNameFields.size() <= 2) {
+        if (playerNameFields.size() <= 2) { // Minimum 2 players
+             javax.swing.JOptionPane.showMessageDialog(window, "Minimum number of players is 2.", "Min Players", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Remove the last player settings panel
-        Panel lastPanel = (Panel) playerSelectionPanel.getChildren().get(playerSelectionPanel.getChildren().size() - 1);
-        playerSelectionPanel.removeChild(lastPanel);
-        
-        // Remove the last name field
-        playerNameFields.remove(playerNameFields.size() - 1);
-        
-        playerSelectionPanel.revalidate();
-        playerSelectionPanel.repaint();
+        // Find the last added player settings panel to remove it
+        // Assumes player setting panels are the last children added after initial setup (title, buttons)
+        int panelIndexToRemove = -1;
+        List<framework.core.Component> children = playerSelectionPanel.getChildren();
+        for(int i = children.size() - 1; i >= 0; i--) {
+            framework.core.Component child = children.get(i);
+            // Identify player setting panels (they contain a TextField and Buttons, and are Panels)
+            if (child instanceof Panel && child.getName() == null) { // Player setting panels have no specific name
+                 boolean hasTextField = false;
+                 for(framework.core.Component subChild : ((Panel)child).getChildren()){
+                     if(subChild instanceof TextField) {
+                         hasTextField = true;
+                         break;
+                     }
+                 }
+                 if(hasTextField) {
+                    panelIndexToRemove = i;
+                    break;
+                 }
+            }
+        }
 
-        updatePlayerButtons();
+
+        if (panelIndexToRemove != -1) {
+            Panel lastPanel = (Panel) children.get(panelIndexToRemove);
+            playerSelectionPanel.removeChild(lastPanel);
+            System.out.println("Removed player settings panel at index: " + panelIndexToRemove);
+
+            // Remove the corresponding name field from the list
+            if (!playerNameFields.isEmpty()) {
+                playerNameFields.remove(playerNameFields.size() - 1);
+            }
+
+            playerSelectionPanel.revalidate();
+            playerSelectionPanel.repaint();
+            updatePlayerButtons(); // Update button states
+        } else {
+             System.err.println("Could not find the last player settings panel to remove.");
+        }
     }
 
     private void updatePlayerButtons() {
@@ -745,104 +997,180 @@ public class UnoGame {
     }
 
     private void startMultiplayerGame() {
-        System.out.println("=== Starting Multiplayer Game ===");
-        System.out.println("Current game state: " + (game == null ? "null" : "initialized"));
-        
-        if (playerNameFields == null || playerNameFields.isEmpty()) {
-            System.err.println("ERROR: No player fields found!");
-            return;
-        }
+        System.out.println("=== Starting Multiplayer Game Setup (Revised Parsing) ===");
 
-        try {
-            // Get player information
-            List<String> playerNames = new ArrayList<>();
-            List<Boolean> isHuman = new ArrayList<>();
-
-            System.out.println("Processing " + playerNameFields.size() + " player fields");
-            for (int i = 0; i < playerNameFields.size(); i++) {
-                TextField field = playerNameFields.get(i);
-                String name = field.getText().trim();
-                if (name.isEmpty()) {
-                    name = field.getPlaceholder();
-                }
-                playerNames.add(name);
-                System.out.println("Player " + (i + 1) + " name: " + name);
-
-                try {
-                    Panel playerSettingsPanel = (Panel) playerSelectionPanel.getChildren().get(i + 1);
-                    Button humanButton = (Button) playerSettingsPanel.getChildren().get(1);
-                    boolean isHumanPlayer = humanButton.isSelected();
-                    isHuman.add(isHumanPlayer);
-                    System.out.println("Player " + (i + 1) + " type: " + (isHumanPlayer ? "Human" : "Computer"));
-                } catch (Exception e) {
-                    System.err.println("ERROR: Failed to get player type for player " + (i + 1));
-                    e.printStackTrace();
-                    return;
-                }
-            }
-
-            // Create and initialize game
-            int humanCount = (int) isHuman.stream().filter(b -> b).count();
-            int computerCount = isHuman.size() - humanCount;
-            System.out.println("Creating new game with " + humanCount + " humans and " + computerCount + " computers");
-
-            game = new Game(humanCount, computerCount);
-            System.out.println("Game instance created: " + game);
-
-            // Set up players with their names
-            List<Player> players = game.getPlayers();
-            int humanIndex = 0;
-            int computerIndex = humanCount;
-            for (int i = 0; i < playerNames.size(); i++) {
-                try {
-                    if (isHuman.get(i)) {
-                        System.out.println("Setting up human player " + humanIndex + ": " + playerNames.get(i));
-                        players.set(humanIndex, new HumanPlayer(playerNames.get(i)));
-                        humanIndex++;
-                    } else {
-                        System.out.println("Setting up computer player " + computerIndex + ": " + playerNames.get(i));
-                        players.set(computerIndex, new ComputerPlayer(playerNames.get(i)));
-                        computerIndex++;
-                    }
-                } catch (Exception e) {
-                    System.err.println("ERROR: Failed to set up player " + i);
-                    e.printStackTrace();
-                    return;
-                }
-            }
-
-            // Initialize game and deal cards
-            System.out.println("Initializing game...");
-            game.initializeGame();
-            System.out.println("Game initialized");
-
-            // Update UI visibility
-            System.out.println("Updating UI visibility...");
-            menuPanel.setVisible(false);
-            playerSelectionPanel.setVisible(false);
-            mainPanel.setVisible(true);
-            drawButton.setVisible(true);
-
-            // Update game view to show cards
-            System.out.println("Updating game view...");
-            updateGameView();
-
-            // Force window update
-            System.out.println("Forcing window update...");
-            window.revalidate();
-            window.repaint();
-            System.out.println("=== Game Started Successfully ===");
-
-        } catch (Exception e) {
-            System.err.println("ERROR: Failed to start game");
-            e.printStackTrace();
+        // --- VALIDATION FIRST ---
+        // Validate based on the number of fields the user has added/removed
+        System.out.println("Validating player count. Number of player fields: " + playerNameFields.size());
+        if (playerNameFields.size() < 2) {
+            System.err.println("Error: Not enough players configured based on field count.");
             javax.swing.JOptionPane.showMessageDialog(
                 window,
-                "Failed to start game: " + e.getMessage(),
-                "Error",
+                "You need at least 2 players to start the game.",
+                "Not Enough Players",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return; // Stop game start
+        }
+        if (playerNameFields.size() > maxPlayers) {
+             System.err.println("Error: Too many players configured based on field count.");
+             javax.swing.JOptionPane.showMessageDialog(
+                window,
+                "You cannot have more than " + maxPlayers + " players.",
+                "Too Many Players",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return; // Stop game start
+        }
+
+        // --- PARSE PLAYER DETAILS (Revised Logic) ---
+        try {
+            List<Player> players = new ArrayList<>();
+            System.out.println("Processing player fields. Expected players: " + playerNameFields.size());
+
+            // Iterate through the known player name fields
+            for (int i = 0; i < playerNameFields.size(); i++) {
+                TextField nameField = playerNameFields.get(i);
+                String playerName = nameField.getText().trim();
+                System.out.println("Processing field for Player " + (i + 1) + ": Name='" + playerName + "'");
+
+                // Basic name validation
+                if (playerName.isEmpty()) {
+                    System.err.println("Error: Player name is empty for field " + (i + 1));
+                    javax.swing.JOptionPane.showMessageDialog(
+                       window,
+                       "Player name cannot be empty for Player " + (i + 1) + ".",
+                       "Invalid Name",
+                       javax.swing.JOptionPane.WARNING_MESSAGE
+                   );
+                   return; // Stop game start
+                }
+
+                // Find the parent Panel containing this TextField and its buttons
+                framework.core.Container parentPanel = null;
+                if (nameField.getParent() instanceof framework.core.Container) {
+                    parentPanel = (framework.core.Container) nameField.getParent();
+                } else {
+                    System.err.println("Error: Parent is not a framework.core.Container.");
+                    return;
+                }
+                if (!(parentPanel instanceof Panel)) {
+                     System.err.println("Error: Could not find parent Panel for name field " + (i + 1));
+                     // Show generic error and stop
+                     javax.swing.JOptionPane.showMessageDialog(window, "Internal error reading player settings.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                     return;
+                }
+
+                Button humanButton = null;
+                Button computerButton = null;
+
+                // Find the Human and Computer buttons within the same parent panel
+                System.out.println("  Searching for buttons in parent panel of " + playerName);
+                for (framework.core.Component sibling : parentPanel.getChildren()) {
+                    if (sibling instanceof Button) {
+                        Button btn = (Button) sibling;
+                         System.out.println("    Found button: " + btn.getText() + ", Selected: " + btn.isSelected());
+                        if ("Human".equals(btn.getText())) {
+                            humanButton = btn;
+                        } else if ("Computer".equals(btn.getText())) {
+                            computerButton = btn;
+                        }
+                    }
+                }
+
+                // Check if buttons were found and determine player type
+                if (humanButton != null && computerButton != null) {
+                    if (humanButton.isSelected()) {
+                        players.add(new HumanPlayer(playerName));
+                        System.out.println("  Added Human Player: " + playerName);
+                    } else if (computerButton.isSelected()) {
+                        players.add(new ComputerPlayer(playerName));
+                        System.out.println("  Added Computer Player: " + playerName);
+                    } else {
+                        // This case should ideally not happen if defaults are set correctly
+                        System.err.println("Error: Neither Human nor Computer selected for player: " + playerName);
+                        javax.swing.JOptionPane.showMessageDialog(
+                           window,
+                           "Please select Human or Computer for player: " + playerName,
+                           "Player Type Error",
+                           javax.swing.JOptionPane.WARNING_MESSAGE
+                       );
+                       return; // Stop game start
+                    }
+                } else {
+                    System.err.println("Error: Could not find Human/Computer buttons for player: " + playerName);
+                    // Show generic error and stop
+                    javax.swing.JOptionPane.showMessageDialog(window, "Internal error reading player settings (buttons not found).", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } // End loop through playerNameFields
+
+            System.out.println("Finished processing fields. Final player count collected: " + players.size());
+
+            // --- FINAL CHECK (Sanity Check) ---
+            // This check should now be much less likely to fail, but kept as a safeguard.
+            if (players.size() != playerNameFields.size()) {
+                System.err.println("Error: Mismatch between expected players (" + playerNameFields.size() + ") and parsed players (" + players.size() + "). Check UI parsing logic.");
+                javax.swing.JOptionPane.showMessageDialog(
+                   window,
+                   "Error reading player settings. Could not start game.", // Keep original message for consistency
+                   "Internal Error",
+                   javax.swing.JOptionPane.ERROR_MESSAGE
+               );
+               return; // Stop game start
+            }
+
+            // Check for at least one human player
+            boolean hasHuman = players.stream().anyMatch(p -> p instanceof HumanPlayer);
+            if (!hasHuman) {
+                 javax.swing.JOptionPane.showMessageDialog(
+                    window,
+                    "You need at least one Human player.",
+                    "No Human Player",
+                    javax.swing.JOptionPane.WARNING_MESSAGE
+                );
+                return; // Stop game start
+            }
+
+            // --- Start Game ---
+            System.out.println("Creating Game instance with " + players.size() + " players.");
+            game = new Game(players);
+            game.initializeGame();
+            System.out.println("Multiplayer game initialized.");
+
+            showGameScreen();
+            updateGameView();
+
+            if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                System.out.println("First player is computer, initiating turn...");
+                triggerComputerTurnWithDelay();
+            } else {
+                System.out.println("First player is human.");
+                updateGameView();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error starting multiplayer game: " + e.getMessage());
+            e.printStackTrace();
+             javax.swing.JOptionPane.showMessageDialog(
+                window,
+                "An error occurred while starting the game: " + e.getMessage(),
+                "Game Start Error",
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
         }
+    }
+
+    // Helper method to trigger computer turn with delay
+    private void triggerComputerTurnWithDelay() {
+        // Use Swing Timer for a delay before the computer plays
+        javax.swing.Timer timer = new javax.swing.Timer(1000, e -> { // 1000 ms = 1 second delay
+            System.out.println("Timer fired, executing computer turn.");
+            playComputerTurn(); // Execute the computer's turn logic
+        });
+        timer.setRepeats(false); // Ensure the timer only runs once
+        timer.start();
+        System.out.println("Computer turn timer started.");
     }
 
     private void showPlayerSelectionScreen() {
@@ -871,6 +1199,22 @@ public class UnoGame {
         addPlayerButton.setVisible(true);
         removePlayerButton.setVisible(true);
 
+        // Reposition existing player fields
+        List<framework.core.Component> children = playerSelectionPanel.getChildren();
+        int playerFieldIndex = 0;
+        for(framework.core.Component child : children) {
+             if (child instanceof Panel && child.getName() == null) { // Player setting panels
+                 child.setBounds(
+                    window.getWidth() / 2 - 200,
+                    150 + playerFieldIndex * 100,
+                    400,
+                    80
+                 );
+                 playerFieldIndex++;
+             }
+        }
+
+
         playerSelectionPanel.revalidate();
         playerSelectionPanel.repaint();
         window.revalidate();
@@ -879,6 +1223,7 @@ public class UnoGame {
     }
 
     public static void main(String[] args) {
-        new UnoGame();
+        // Ensure UI operations are on the Event Dispatch Thread
+        javax.swing.SwingUtilities.invokeLater(() -> new UnoGame());
     }
 }

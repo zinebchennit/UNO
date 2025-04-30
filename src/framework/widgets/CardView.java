@@ -73,6 +73,15 @@ public class CardView extends Component {
   }
 
   private String getImageFilename() {
+    // Special handling for Wild cards - always use the base Wild card images
+    // regardless of their assigned color
+    if (card.getType().equals("Wild")) {
+      return "Wild.png";
+    } else if (card.getType().equals("Wild Draw Four")) {
+      return "WildFour.png";
+    }
+    
+    // For all other cards, get the appropriate color name
     String color = card.getColor().equals("Rouge") ? "Red"
         : card.getColor().equals("Bleu") ? "Blue"
             : card.getColor().equals("Vert") ? "Green" : card.getColor().equals("Jaune") ? "Yellow" : "";
@@ -92,8 +101,6 @@ public class CardView extends Component {
         default -> String.valueOf(card.getValue());
       };
       return number + "_" + color + ".png";
-    } else if (card.getColor().equals("Noir")) {
-      return card.getType().equals("Wild") ? "Wild.png" : "WildFour.png";
     } else {
       String type = switch (card.getType()) {
         case "Skip" -> "Passer";
