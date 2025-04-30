@@ -3,14 +3,17 @@ package framework.core;
 import framework.events.EventListener;
 import framework.events.MouseEvent;
 import java.awt.Graphics;
-import java.awt.event.MouseAdapter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
 
 public class Component extends JComponent {
-    private final List<EventListener> listeners = new ArrayList<>();
+    private List<EventListener> eventListeners = new ArrayList<>();
     private String name;
+
+    public Component() {
+        this("Component");
+    }
 
     public Component(String name) {
         super();
@@ -19,60 +22,85 @@ public class Component extends JComponent {
         setupMouseListener();
     }
 
-    public Component() {
-        setOpaque(false);
-    }
-
     private void setupMouseListener() {
-        addMouseListener(new MouseAdapter() {
+        addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
-                MouseEvent event = new MouseEvent(e.getX(), e.getY(), e.getButton(), Component.this);
-                notifyMouseClick(event);
+                notifyMouseClick(new MouseEvent(e.getX(), e.getY()));
             }
 
             @Override
             public void mousePressed(java.awt.event.MouseEvent e) {
-                MouseEvent event = new MouseEvent(e.getX(), e.getY(), e.getButton(), Component.this);
-                notifyMousePress(event);
+                notifyMousePress(new MouseEvent(e.getX(), e.getY()));
             }
 
             @Override
             public void mouseReleased(java.awt.event.MouseEvent e) {
-                MouseEvent event = new MouseEvent(e.getX(), e.getY(), e.getButton(), Component.this);
-                notifyMouseRelease(event);
+                notifyMouseRelease(new MouseEvent(e.getX(), e.getY()));
+            }
+
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                notifyMouseEnter(new MouseEvent(e.getX(), e.getY()));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                notifyMouseExit(new MouseEvent(e.getX(), e.getY()));
             }
         });
     }
 
     public void addEventListener(EventListener listener) {
-        listeners.add(listener);
+        eventListeners.add(listener);
     }
 
     public void removeEventListener(EventListener listener) {
-        listeners.remove(listener);
+        eventListeners.remove(listener);
     }
 
     protected void notifyMouseClick(MouseEvent event) {
-        for (EventListener listener : listeners) {
+        for (EventListener listener : eventListeners) {
             listener.onMouseClick(event);
         }
     }
 
     protected void notifyMousePress(MouseEvent event) {
-        for (EventListener listener : listeners) {
+        for (EventListener listener : eventListeners) {
             listener.onMousePress(event);
         }
     }
 
     protected void notifyMouseRelease(MouseEvent event) {
-        for (EventListener listener : listeners) {
+        for (EventListener listener : eventListeners) {
             listener.onMouseRelease(event);
+        }
+    }
+
+    protected void notifyMouseEnter(MouseEvent event) {
+        for (EventListener listener : eventListeners) {
+            listener.onMouseEnter(event);
+        }
+    }
+
+    protected void notifyMouseExit(MouseEvent event) {
+        for (EventListener listener : eventListeners) {
+            listener.onMouseExit(event);
         }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        repaint();
     }
 }

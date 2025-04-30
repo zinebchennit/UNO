@@ -13,6 +13,10 @@ public class MouseEvent {
         this.source = source;
     }
 
+    public MouseEvent(int x, int y) {
+        this(x, y, 1, null);
+    }
+
     public int getX() {
         return x;
     }

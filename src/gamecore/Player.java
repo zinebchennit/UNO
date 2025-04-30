@@ -8,6 +8,10 @@ public abstract class Player {
     protected List<Card> hand;
     protected Card lastPlayedCard;
 
+    public Player() {
+        // Default constructor
+    }
+
     public Player(String name) {
         this.name = name;
         this.hand = new ArrayList<>();
@@ -34,7 +38,17 @@ public abstract class Player {
         hand.remove(card);
     }
 
-    public abstract boolean playTurn(Card topCard);
-    
+    public boolean playTurn(Card topCard) {
+        Card playedCard = playCard(topCard);
+        if (playedCard != null) {
+            return true;
+        }
+        return false;
+    }
+
     public abstract String chooseColor();
+
+    public abstract List<Card> getHand();
+
+    public abstract Card playCard(Card topCard);
 }

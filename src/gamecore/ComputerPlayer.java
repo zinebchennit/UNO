@@ -1,61 +1,69 @@
 package gamecore;
-import java.util.HashMap;
-import java.util.Map;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class ComputerPlayer extends Player {
+    private String name;
+    private List<Card> hand;
+    private Random random;
+
     public ComputerPlayer(String name) {
         super(name);
+        this.hand = new ArrayList<>();
+        this.random = new Random();
     }
-    
+
     @Override
-    public boolean playTurn(Card topCard) {
-        Card playedCard = playCard(topCard);
-        if (playedCard != null) {
-            setLastPlayedCard(playedCard);
-            return true;
-        }
-        return false;
+    public void addCard(Card card) {
+        hand.add(card);
     }
-    
-    private Card playCard(Card topCard) {
-        // Stratégie simple: jouer la première carte valide
-        for (int i = 0; i < hand.size(); i++) {
-            Card card = hand.get(i);
-            if (card.canPlayOn(topCard)) {
-                return hand.remove(i);
-            }
+
+    @Override
+    public List<Card> getHand() {
+        return hand;
+    }
+
+    @Override
+    public int getHandSize() {
+        return hand.size();
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Card removeCard(int index) {
+        if (index >= 0 && index < hand.size()) {
+            return hand.remove(index);
         }
-        
-        // Si aucune carte ne peut être jouée, retourner null pour piocher
         return null;
     }
-    
+
+    @Override
+    public Card playCard(Card topCard) {
+        for (Card card : hand) {
+            if (card.canPlayOn(topCard)) {
+                hand.remove(card);
+                if (card.getType().equals("Wild") || card.getType().equals("Wild Draw Four")) {
+                    card.setColor(chooseColor());
+                }
+                setLastPlayedCard(card);
+                return card;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String chooseColor() {
-        // Stratégie: choisir la couleur la plus fréquente dans la main
-        Map<String, Integer> colorCounts = new HashMap<>();
-        colorCounts.put("Rouge", 0);
-        colorCounts.put("Bleu", 0);
-        colorCounts.put("Vert", 0);
-        colorCounts.put("Jaune", 0);
-        
-        for (Card card : hand) {
-            String color = card.getColor();
-            if (!color.equals("Noir")) {
-                colorCounts.put(color, colorCounts.get(color) + 1);
-            }
-        }
-        
-        String mostFrequentColor = "Rouge"; // Couleur par défaut
-        int maxCount = -1;
-        
-        for (Map.Entry<String, Integer> entry : colorCounts.entrySet()) {
-            if (entry.getValue() > maxCount) {
-                maxCount = entry.getValue();
-                mostFrequentColor = entry.getKey();
-            }
-        }
-        
-        return mostFrequentColor;
+        String[] colors = {"Rouge", "Bleu", "Vert", "Jaune"};
+        return colors[random.nextInt(colors.length)];
     }
 }

@@ -13,6 +13,8 @@ public class Button extends Component {
   private Color hoverColor = new Color(75, 75, 80);
   private Color pressedColor = new Color(45, 45, 50);
   private Color textColor = new Color(240, 240, 240);
+  private String group;
+  private boolean selected;
 
   public Button(String text) {
     super("Button");
@@ -55,6 +57,7 @@ public class Button extends Component {
 
   @Override
   protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
     Graphics2D g2d = (Graphics2D) g.create();
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -105,6 +108,15 @@ public class Button extends Component {
     g2d.setColor(textColor);
     g2d.drawString(text, x, y);
 
+    if (selected) {
+        // Draw a thicker border for selected state
+        g.setColor(new Color(255, 255, 255, 150));
+        g.fillRect(0, 0, getWidth(), getHeight());
+        g.setColor(new Color(255, 255, 255));
+        g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+        g.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
+    }
+
     g2d.dispose();
   }
 
@@ -134,5 +146,18 @@ public class Button extends Component {
   public void setTextColor(Color color) {
     this.textColor = color;
     repaint();
+  }
+
+  public void setGroup(String group) {
+    this.group = group;
+  }
+
+  public void setSelected(boolean selected) {
+    this.selected = selected;
+    repaint();
+  }
+
+  public boolean isSelected() {
+    return selected;
   }
 }

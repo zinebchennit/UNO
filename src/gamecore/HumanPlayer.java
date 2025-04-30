@@ -1,21 +1,49 @@
 package gamecore;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class HumanPlayer extends Player {
+    private String name;
+    private List<Card> hand;
+    private Card selectedCard;
+    private String selectedColor;
     private final Scanner scanner;
 
     public HumanPlayer(String name) {
-        super(name);
+        this.hand = new ArrayList<>();
+        this.name = name;
+        this.selectedCard = null;
+        this.selectedColor = null;
         this.scanner = new Scanner(System.in);
     }
 
-    // Nouvelles méthodes pour l'interface graphique
+    @Override
+    public void addCard(Card card) {
+        hand.add(card);
+    }
+
+    @Override
     public List<Card> getHand() {
         return hand;
     }
 
+    @Override
+    public int getHandSize() {
+        return hand.size();
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // Nouvelles méthodes pour l'interface graphique
     public Card getCard(int index) {
         if (index >= 0 && index < hand.size()) {
             return hand.get(index);
@@ -40,85 +68,32 @@ public class HumanPlayer extends Player {
         return false;
     }
 
-    private Card playCard(Card topCard) {
-        // Vérifier si le joueur a des cartes jouables
-        if (!hasPlayableCard(topCard)) {
-            System.out.println(name + ", vous n'avez pas de carte jouable. Vous devez piocher une carte.");
-            return null;
-        }
-
-        // Afficher les cartes disponibles
-        displayHand();
-
-        System.out.println("Quelle carte voulez-vous jouer? (entrez le numéro de la carte, ou 0 pour piocher)");
-        int choice;
-        try {
-            choice = Integer.parseInt(scanner.nextLine());
-        } catch (NumberFormatException e) {
-            System.out.println("Entrée invalide. Veuillez entrer un nombre.");
-            return playCard(topCard);
-        }
-
-        // Si le joueur choisit de piocher
-        if (choice == 0) {
-            return null;
-        }
-
-        // Vérifier si la sélection est valide
-        if (choice < 1 || choice > hand.size()) {
-            System.out.println("Choix invalide. Veuillez choisir un numéro entre 1 et " + hand.size());
-            return playCard(topCard);
-        }
-
-        Card selectedCard = hand.get(choice - 1);
-
-        // Vérifier si la carte peut être jouée
-        if (!selectedCard.canPlayOn(topCard)) {
-            System.out.println("Cette carte ne peut pas être jouée. Veuillez en choisir une autre.");
-            return playCard(topCard);
-        }
-
-        return hand.remove(choice - 1);
-    }
-
-    private boolean hasPlayableCard(Card topCard) {
-        for (Card card : hand) {
-            if (card.canPlayOn(topCard)) {
-                return true;
+    @Override
+    public Card playCard(Card topCard) {
+        if (selectedCard != null && selectedCard.canPlayOn(topCard)) {
+            hand.remove(selectedCard);
+            Card cardToPlay = selectedCard;
+            if (cardToPlay.getType().equals("Wild") || cardToPlay.getType().equals("Wild Draw Four")) {
+                cardToPlay.setColor(selectedColor);
             }
+            selectedCard = null;
+            selectedColor = null;
+            return cardToPlay;
         }
-        return false;
+        return null;
     }
 
     @Override
     public String chooseColor() {
-        boolean validInput = false;
-        while (!validInput) {
-            System.out.println("Choisissez une couleur:");
-            System.out.println("1. Rouge");
-            System.out.println("2. Bleu");
-            System.out.println("3. Vert");
-            System.out.println("4. Jaune");
+        return selectedColor != null ? selectedColor : "Rouge";
+    }
 
-            try {
-                int choice = Integer.parseInt(scanner.nextLine());
-                switch (choice) {
-                    case 1:
-                        return "Rouge";
-                    case 2:
-                        return "Bleu";
-                    case 3:
-                        return "Vert";
-                    case 4:
-                        return "Jaune";
-                    default:
-                        System.out.println("Choix invalide. Veuillez choisir un nombre entre 1 et 4.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Entrée invalide. Veuillez entrer un nombre entre 1 et 4.");
-            }
-        }
-        return "Rouge"; // Couleur par défaut (ne devrait jamais être atteint)
+    public void setSelectedCard(Card card) {
+        this.selectedCard = card;
+    }
+
+    public void setSelectedColor(String color) {
+        this.selectedColor = color;
     }
 
     public void displayHand() {
