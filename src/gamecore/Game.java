@@ -57,6 +57,7 @@ public class Game {
             if (played) {
                 topCard = currentPlayer.getLastPlayedCard();
                 handleCardEffect(currentPlayer.getLastPlayedCard());
+                moveToNextPlayer();
             } else {
                 currentPlayer.addCard(deck.drawCard());
                 moveToNextPlayer();
@@ -138,6 +139,10 @@ public class Game {
                 handleWildCard();
                 nextPlayerDrawCards(4);
             }
+            default -> {
+                // Pour les cartes normales, on ne fait rien car le passage au joueur suivant
+                // est déjà géré dans playComputerCard et playCard
+            }
         }
     }
 
@@ -217,13 +222,18 @@ public class Game {
             boolean played = currentPlayer.playTurn(topCard);
             if (played) {
                 Card playedCard = currentPlayer.getLastPlayedCard();
-                topCard = playedCard;
-                handleCardEffect(playedCard);
                 if (playedCard.getType().equals("Wild") || playedCard.getType().equals("Wild Draw Four")) {
                     String newColor = ((ComputerPlayer) currentPlayer).chooseColor();
                     playedCard.setColor(newColor);
                 }
+                topCard = playedCard;
+                handleCardEffect(playedCard);
+                moveToNextPlayer();
                 return true;
+            } else {
+                currentPlayer.addCard(drawCard());
+                moveToNextPlayer();
+                return false;
             }
         }
         return false;

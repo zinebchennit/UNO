@@ -280,12 +280,15 @@ public class UnoGame {
     private void drawCard() {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof HumanPlayer) {
+            // Le joueur humain pioche une carte
             currentPlayer.addCard(game.drawCard());
             updateGameView();
-            // Passer au tour suivant après avoir pioché
+            
+            // Passer au tour suivant
             game.moveToNextPlayer();
-            // Faire jouer l'ordinateur tant que c'est son tour
-            while (game.getCurrentPlayer() instanceof ComputerPlayer) {
+            
+            // Si c'est maintenant le tour de l'ordinateur, le faire jouer
+            if (game.getCurrentPlayer() instanceof ComputerPlayer) {
                 playComputerTurn();
             }
         }
@@ -413,10 +416,8 @@ public class UnoGame {
                     }
                 }
 
-                // Passer au tour suivant
-                game.moveToNextPlayer();
-                // Faire jouer l'ordinateur tant que c'est son tour
-                while (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                // Si c'est maintenant le tour de l'ordinateur, le faire jouer
+                if (game.getCurrentPlayer() instanceof ComputerPlayer) {
                     playComputerTurn();
                 }
             }
@@ -440,12 +441,17 @@ public class UnoGame {
             if (!played) {
                 // Si l'ordinateur ne peut pas jouer, il pioche une carte
                 currentPlayer.addCard(game.drawCard());
+                // Mettre à jour l'interface
+                updateGameView();
                 // Passer au joueur suivant
                 game.moveToNextPlayer();
+            } else {
+                // Mettre à jour l'interface après avoir joué
+                updateGameView();
+                // Passer au joueur suivant après que l'ordinateur a joué
+                game.moveToNextPlayer();
             }
-
-            // Mettre à jour l'interface après chaque action
-            updateGameView();
+            
             System.out.println("Tour de l'ordinateur terminé");
         }
     }
