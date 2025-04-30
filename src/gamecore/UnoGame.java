@@ -1051,44 +1051,48 @@ public class UnoGame {
             return;
         }
 
-        // Find the last added player settings panel to remove it
-        // Assumes player setting panels are the last children added after initial setup (title, buttons)
-        int panelIndexToRemove = -1;
-        List<framework.core.Component> children = playerSelectionPanel.getChildren();
-        for(int i = children.size() - 1; i >= 0; i--) {
-            framework.core.Component child = children.get(i);
-            // Identify player setting panels (they contain a TextField and Buttons, and are Panels)
-            if (child instanceof Panel && child.getName() == null) { // Player setting panels have no specific name
-                 boolean hasTextField = false;
-                 for(framework.core.Component subChild : ((Panel)child).getChildren()){
-                     if(subChild instanceof TextField) {
-                         hasTextField = true;
-                         break;
-                     }
-                 }
-                 if(hasTextField) {
-                    panelIndexToRemove = i;
-                    break;
-                 }
+        // Get the last player settings panel
+        Panel lastPlayerPanel = null;
+        for (int i = playerSelectionPanel.getChildren().size() - 1; i >= 0; i--) {
+            framework.core.Component child = playerSelectionPanel.getChildren().get(i);
+            if (child instanceof Panel) {
+                Panel panel = (Panel) child;
+                // Check if this panel contains a TextField (player name field)
+                for (framework.core.Component subChild : panel.getChildren()) {
+                    if (subChild instanceof TextField) {
+                        lastPlayerPanel = panel;
+                        break;
+                    }
+                }
+                if (lastPlayerPanel != null) break;
             }
         }
 
-
-        if (panelIndexToRemove != -1) {
-            Panel lastPanel = (Panel) children.get(panelIndexToRemove);
-            playerSelectionPanel.removeChild(lastPanel);
-            System.out.println("Removed player settings panel at index: " + panelIndexToRemove);
-
-            // Remove the corresponding name field from the list
+        if (lastPlayerPanel != null) {
+            // Remove the panel from the player selection panel
+            playerSelectionPanel.removeChild(lastPlayerPanel);
+            
+            // Remove the last TextField from the list
             if (!playerNameFields.isEmpty()) {
                 playerNameFields.remove(playerNameFields.size() - 1);
             }
 
+            // Update the UI
             playerSelectionPanel.revalidate();
             playerSelectionPanel.repaint();
-            updatePlayerButtons(); // Update button states
+            
+            // Update button states
+            updatePlayerButtons();
+            
+            System.out.println("Successfully removed player field");
         } else {
-             System.err.println("Could not find the last player settings panel to remove.");
+            System.err.println("Could not find player panel to remove");
+            javax.swing.JOptionPane.showMessageDialog(
+                window,
+                "Could not remove player. Please try again.",
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
