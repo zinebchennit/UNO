@@ -810,8 +810,28 @@ public class UnoGame {
                 // Attempt to play the card using the Game logic
                 // Pass the index, not the card object
                 if (game.getCurrentTopCard() != null && clickedCard.canPlayOn(game.getCurrentTopCard())) {
+                    // Vérifier si c'est une carte Wild avant de la jouer
+                    boolean isWildCard = clickedCard.getType().equals("Wild") || clickedCard.getType().equals("Wild Draw Four");
+                    String chosenColor = null;
+                    
+                    if (isWildCard) {
+                        // Récupérer la couleur choisie avant de jouer la carte
+                        chosenColor = ((HumanPlayer)currentPlayer).chooseColor();
+                        if (chosenColor == null) {
+                            return; // L'utilisateur a annulé la sélection de couleur
+                        }
+                    }
+                    
                     if (game.playCard(cardIndex)) {
                         hasDrawnThisTurn = false;
+                        
+                        // Afficher un message pour informer de la couleur choisie
+                        if (isWildCard && chosenColor != null) {
+                            javax.swing.JOptionPane.showMessageDialog(window, 
+                                currentPlayer.getName() + " a choisi la couleur: " + chosenColor,
+                                "Couleur choisie", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        
                         updateGameView(); // Update the view after playing
 
                         // Check for game over
@@ -850,8 +870,29 @@ public class UnoGame {
         if (currentPlayer instanceof ComputerPlayer) {
             System.out.println("--- Starting computer turn: " + currentPlayer.getName() + " ---");
 
+            // Sauvegardons la carte du dessus avant que l'ordinateur joue
+            Card topCardBefore = game.getCurrentTopCard();
+            
             // Use the Game's method which handles logic and turn progression
             boolean actionTaken = game.playComputerCard(); // Store result
+
+            // Vérifions si l'ordinateur a joué une carte Wild
+            if (actionTaken) {
+                Card topCardAfter = game.getCurrentTopCard();
+                
+                // Si la carte jouée était une Wild ou Wild Draw Four
+                if (topCardAfter != null && 
+                    (topCardAfter.getType().equals("Wild") || topCardAfter.getType().equals("Wild Draw Four"))) {
+                    
+                    // Afficher message de la couleur choisie
+                    javax.swing.JOptionPane.showMessageDialog(
+                        window,
+                        currentPlayer.getName() + " a choisi la couleur: " + topCardAfter.getColor(),
+                        "Couleur choisie par l'ordinateur",
+                        javax.swing.JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+            }
 
             System.out.println("Computer " + currentPlayer.getName() + " action completed. Action taken: " + actionTaken);
 
@@ -886,12 +927,39 @@ public class UnoGame {
         }
         if (winner != null) {
             System.out.println("Game Over! Winner: " + winner);
-             javax.swing.JOptionPane.showMessageDialog(window, "Game Over!\nWinner: " + winner, "Game Over", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            // Optionally disable game interactions or return to menu
-            // drawButton.setEnabled(false); // Example
+            
+            // Utiliser JOptionPane avec un bouton "OK" pour retourner au menu principal
+            int response = javax.swing.JOptionPane.showConfirmDialog(
+                window,
+                "Partie terminée!\nVainqueur: " + winner + "\n\nCliquez sur OK pour retourner au menu principal.",
+                "Fin de partie",
+                javax.swing.JOptionPane.OK_CANCEL_OPTION,
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+            // Si l'utilisateur clique sur OK, retourner au menu principal
+            if (response == javax.swing.JOptionPane.OK_OPTION) {
+                returnToMainMenu();
+            }
         } else {
-             System.out.println("Game Over called but no winner found?"); // Should not happen if isGameOver is true
+            System.out.println("Game Over called but no winner found?");
         }
+    }
+    
+    // Nouvelle méthode pour retourner au menu principal
+    private void returnToMainMenu() {
+        // Réinitialiser l'état du jeu
+        game = null;
+        hasDrawnThisTurn = false;
+        
+        // Cacher tous les panneaux de jeu et afficher le menu principal
+        mainPanel.setVisible(false);
+        playerSelectionPanel.setVisible(false);
+        menuPanel.setVisible(true);
+        
+        // Rafraîchir l'affichage
+        window.revalidate();
+        window.repaint();
     }
 
     private void addPlayerField() {
