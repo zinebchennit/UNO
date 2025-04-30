@@ -28,11 +28,19 @@ public class Card {
             return true;
         }
 
-        if (color.equals("Noir")) {
+        if (topCard.getColor().equals("Noir")) {
             return false;
         }
 
-        return color.equals(topCard.getColor()) || type.equals(topCard.getType());
+        if (color.equals(topCard.getColor())) {
+            return true;
+        }
+
+        if (type.equals("Number") && topCard.getType().equals("Number")) {
+            return value == topCard.getValue();
+        }
+
+        return type.equals(topCard.getType());
     }
 
     public void setColor(String color) {

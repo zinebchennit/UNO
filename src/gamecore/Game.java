@@ -51,9 +51,7 @@ public class Game {
     public void playGame() {
         while (!isGameOver()) {
             Player currentPlayer = players.get(currentPlayerIndex);
-            delay();
-
-            System.out.println("\\nTop card: " + topCard);
+            System.out.println("\nTop card: " + topCard);
             boolean played = currentPlayer.playTurn(topCard);
 
             if (played) {
@@ -90,11 +88,36 @@ public class Game {
         Player currentPlayer = getCurrentPlayer();
         if (currentPlayer instanceof HumanPlayer) {
             Card card = ((HumanPlayer) currentPlayer).getCard(cardIndex);
-            if (card != null && card.canPlayOn(topCard)) {
-                ((HumanPlayer) currentPlayer).removeCard(cardIndex);
-                topCard = card;
-                handleCardEffect(card);
-                return true;
+            if (card != null) {
+                // Vérifier si la carte peut être jouée
+                if (card.canPlayOn(topCard)) {
+                    // Si c'est une carte Wild, demander la couleur
+                    if (card.getType().equals("Wild") || card.getType().equals("Wild Draw Four")) {
+                        String[] options = {"Rouge", "Bleu", "Vert", "Jaune"};
+                        String newColor = (String) javax.swing.JOptionPane.showInputDialog(
+                            null,
+                            "Choisissez une couleur:",
+                            "Changer de couleur",
+                            javax.swing.JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            options,
+                            options[0]
+                        );
+                        if (newColor != null) {
+                            card.setColor(newColor);
+                            ((HumanPlayer) currentPlayer).removeCard(cardIndex);
+                            topCard = card;
+                            handleCardEffect(card);
+                            return true;
+                        }
+                        return false;
+                    } else {
+                        ((HumanPlayer) currentPlayer).removeCard(cardIndex);
+                        topCard = card;
+                        handleCardEffect(card);
+                        return true;
+                    }
+                }
             }
         }
         return false;
@@ -133,10 +156,15 @@ public class Game {
     private void nextPlayerDrawCards(int count) {
         moveToNextPlayer();
         Player player = players.get(currentPlayerIndex);
+        System.out.println(player.getName() + " doit piocher " + count + " cartes");
         for (int i = 0; i < count; i++) {
-            player.addCard(deck.drawCard());
+            Card drawnCard = deck.drawCard();
+            if (drawnCard != null) {
+                player.addCard(drawnCard);
+                System.out.println(player.getName() + " pioche une carte");
+            }
         }
-        moveToNextPlayer();
+        // Ne pas passer au joueur suivant ici, car le joueur qui a pioché doit jouer son tour
     }
 
     private void handleWildCard() {
@@ -164,7 +192,7 @@ public class Game {
     private void announceWinner() {
         for (Player player : players) {
             if (player.getHandSize() == 0) {
-                System.out.println("\\n" + player.getName() + " wins!");
+                System.out.println("\n" + player.getName() + " wins!");
                 return;
             }
         }

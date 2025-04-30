@@ -7,6 +7,7 @@ import framework.widgets.Button;
 import framework.widgets.CardView;
 import framework.widgets.Panel;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
 public class UnoGame {
     private Window window;
@@ -70,15 +72,68 @@ public class UnoGame {
         // Boutons du menu
         startSoloButton = new Button("Play Solo");
         startSoloButton.setBounds(412, 450, 200, 50);
-        startSoloButton.setBackground(new Color(135, 206, 235)); // Bleu clair
+        startSoloButton.setBackground(new Color(52, 152, 219)); // Bleu plus moderne
+        startSoloButton.setTextColor(Color.WHITE);
+        startSoloButton.setFont(new Font("Arial", Font.BOLD, 16));
         startSoloButton.setOpaque(true);
         System.out.println("Bouton solo créé");
 
         startMultiButton = new Button("MultiPlayer");
         startMultiButton.setBounds(412, 520, 200, 50);
-        startMultiButton.setBackground(new Color(255, 182, 193)); // Rose clair
+        startMultiButton.setBackground(new Color(231, 76, 60)); // Rouge plus moderne
+        startMultiButton.setTextColor(Color.WHITE);
+        startMultiButton.setFont(new Font("Arial", Font.BOLD, 16));
         startMultiButton.setOpaque(true);
         System.out.println("Bouton multi créé");
+
+        // Ajouter un effet de survol
+        startSoloButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseEnter(MouseEvent event) {
+                startSoloButton.setBackground(new Color(41, 128, 185)); // Bleu plus foncé
+            }
+
+            @Override
+            public void onMouseExit(MouseEvent event) {
+                startSoloButton.setBackground(new Color(52, 152, 219)); // Retour à la couleur normale
+            }
+
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                startNewGame(1, 1);
+                showGameScreen();
+            }
+
+            @Override
+            public void onMousePress(MouseEvent event) {}
+
+            @Override
+            public void onMouseRelease(MouseEvent event) {}
+        });
+
+        startMultiButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseEnter(MouseEvent event) {
+                startMultiButton.setBackground(new Color(192, 57, 43)); // Rouge plus foncé
+            }
+
+            @Override
+            public void onMouseExit(MouseEvent event) {
+                startMultiButton.setBackground(new Color(231, 76, 60)); // Retour à la couleur normale
+            }
+
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                startNewGame(2, 0);
+                showGameScreen();
+            }
+
+            @Override
+            public void onMousePress(MouseEvent event) {}
+
+            @Override
+            public void onMouseRelease(MouseEvent event) {}
+        });
 
         menuPanel.addChild(startSoloButton);
         menuPanel.addChild(startMultiButton);
@@ -136,54 +191,6 @@ public class UnoGame {
     }
 
     private void setupEventListeners() {
-        startSoloButton.addEventListener(new EventListener() {
-            @Override
-            public void onMouseClick(MouseEvent event) {
-                startNewGame(1, 1); // 1 joueur humain, 1 ordinateur
-                showGameScreen();
-            }
-
-            @Override
-            public void onMousePress(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseRelease(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseEnter(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseExit(MouseEvent event) {
-            }
-        });
-
-        startMultiButton.addEventListener(new EventListener() {
-            @Override
-            public void onMouseClick(MouseEvent event) {
-                startNewGame(2, 0); // 2 joueurs humains
-                showGameScreen();
-            }
-
-            @Override
-            public void onMousePress(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseRelease(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseEnter(MouseEvent event) {
-            }
-
-            @Override
-            public void onMouseExit(MouseEvent event) {
-            }
-        });
-
         drawButton.addEventListener(new EventListener() {
             @Override
             public void onMouseClick(MouseEvent event) {
@@ -234,80 +241,82 @@ public class UnoGame {
     }
 
     private void updateGameView() {
-        gamePanel.removeAll();
-        playerPanel.removeAll();
-        computerPanel.removeAll();
+        SwingUtilities.invokeLater(() -> {
+            gamePanel.removeAll();
+            playerPanel.removeAll();
+            computerPanel.removeAll();
 
-        // Afficher la carte du dessus
-        Card topCard = game.getCurrentTopCard();
-        if (topCard != null) {
-            CardView topCardView = new CardView(topCard);
-            topCardView.setBounds(272, 84, 80, 120);
-            topCardView.setFaceUp(true);
-            gamePanel.addChild(topCardView);
-        }
-
-        // Afficher les cartes du joueur humain
-        List<Card> playerCards = null;
-        for (Player player : game.getPlayers()) {
-            if (player instanceof HumanPlayer) {
-                playerCards = ((HumanPlayer) player).getHand();
-                break;
+            // Afficher la carte du dessus
+            Card topCard = game.getCurrentTopCard();
+            if (topCard != null) {
+                CardView topCardView = new CardView(topCard);
+                topCardView.setBounds(272, 84, 80, 120);
+                topCardView.setFaceUp(true);
+                gamePanel.addChild(topCardView);
             }
-        }
 
-        if (playerCards != null) {
-            int cardWidth = 80;
-            int spacing = 20;
-            int totalWidth = (cardWidth + spacing) * playerCards.size() - spacing;
-            int startX = (playerPanel.getWidth() - totalWidth) / 2;
-
-            for (Card card : playerCards) {
-                CardView cardView = new CardView(card);
-                cardView.setBounds(startX, 40, cardWidth, 120);
-                cardView.setFaceUp(true);
-                cardView.addCardClickListener(new CardView.CardClickListener() {
-                    @Override
-                    public void onCardClicked(CardView cardView) {
-                        handleCardClick(cardView);
-                    }
-                });
-                playerPanel.addChild(cardView);
-                startX += cardWidth + spacing;
+            // Afficher les cartes du joueur humain
+            List<Card> playerCards = null;
+            for (Player player : game.getPlayers()) {
+                if (player instanceof HumanPlayer) {
+                    playerCards = ((HumanPlayer) player).getHand();
+                    break;
+                }
             }
-        }
 
-        // Afficher les cartes de l'ordinateur (face cachée)
-        for (Player player : game.getPlayers()) {
-            if (player instanceof ComputerPlayer) {
-                int handSize = player.getHandSize();
+            if (playerCards != null) {
                 int cardWidth = 80;
                 int spacing = 20;
-                int totalWidth = (cardWidth + spacing) * handSize - spacing;
-                int startX = (computerPanel.getWidth() - totalWidth) / 2;
+                int totalWidth = (cardWidth + spacing) * playerCards.size() - spacing;
+                int startX = (playerPanel.getWidth() - totalWidth) / 2;
 
-                for (int i = 0; i < handSize; i++) {
-                    CardView cardView = new CardView(new Card("Noir", "Hidden", 0));
+                for (Card card : playerCards) {
+                    CardView cardView = new CardView(card);
                     cardView.setBounds(startX, 40, cardWidth, 120);
-                    cardView.setFaceUp(false);
-                    computerPanel.addChild(cardView);
+                    cardView.setFaceUp(true);
+                    cardView.addCardClickListener(new CardView.CardClickListener() {
+                        @Override
+                        public void onCardClicked(CardView cardView) {
+                            handleCardClick(cardView);
+                        }
+                    });
+                    playerPanel.addChild(cardView);
                     startX += cardWidth + spacing;
                 }
-                break;
             }
-        }
 
-        // Vérifier si le jeu est terminé
-        if (game.isGameOver()) {
-            announceWinner();
-        }
+            // Afficher les cartes de l'ordinateur (face cachée)
+            for (Player player : game.getPlayers()) {
+                if (player instanceof ComputerPlayer) {
+                    int handSize = player.getHandSize();
+                    int cardWidth = 80;
+                    int spacing = 20;
+                    int totalWidth = (cardWidth + spacing) * handSize - spacing;
+                    int startX = (computerPanel.getWidth() - totalWidth) / 2;
 
-        gamePanel.revalidate();
-        gamePanel.repaint();
-        playerPanel.revalidate();
-        playerPanel.repaint();
-        computerPanel.revalidate();
-        computerPanel.repaint();
+                    for (int i = 0; i < handSize; i++) {
+                        CardView cardView = new CardView(new Card("Noir", "Hidden", 0));
+                        cardView.setBounds(startX, 40, cardWidth, 120);
+                        cardView.setFaceUp(false);
+                        computerPanel.addChild(cardView);
+                        startX += cardWidth + spacing;
+                    }
+                    break;
+                }
+            }
+
+            // Vérifier si le jeu est terminé
+            if (game.isGameOver()) {
+                announceWinner();
+            }
+
+            gamePanel.revalidate();
+            gamePanel.repaint();
+            playerPanel.revalidate();
+            playerPanel.repaint();
+            computerPanel.revalidate();
+            computerPanel.repaint();
+        });
     }
 
     private void handleCardClick(CardView cardView) {
@@ -316,7 +325,19 @@ public class UnoGame {
             List<Card> playerCards = game.getCurrentPlayerCards();
             int cardIndex = playerCards.indexOf(cardView.getCard());
             if (cardIndex != -1 && game.playCard(cardIndex)) {
+                // Mettre à jour l'interface après avoir joué la carte
                 updateGameView();
+                
+                // Réduire le délai pour les cartes spéciales à 500ms
+                Card playedCard = game.getCurrentTopCard();
+                if (playedCard.getType().equals("Draw Two") || playedCard.getType().equals("Wild Draw Four")) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 // Passer au tour suivant
                 game.moveToNextPlayer();
                 // Faire jouer l'ordinateur tant que c'est son tour
@@ -330,9 +351,9 @@ public class UnoGame {
     private void playComputerTurn() {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof ComputerPlayer) {
-            // Ajouter un petit délai pour que le joueur puisse voir ce qui se passe
+            // Réduire le délai à 500ms
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -348,6 +369,7 @@ public class UnoGame {
                 game.moveToNextPlayer();
             }
 
+            // Mettre à jour l'interface après chaque action
             updateGameView();
             System.out.println("Tour de l'ordinateur terminé");
         }
