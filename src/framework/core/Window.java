@@ -8,6 +8,7 @@ public class Window extends JFrame {
 
   public Window(String title, int width, int height) {
     super(title);
+    System.out.println("Initialisation de la fenêtre : " + title);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setSize(width, height);
     setMinimumSize(new Dimension(800, 600));
@@ -32,6 +33,7 @@ public class Window extends JFrame {
     };
     rootContainer.setBounds(0, 0, width, height);
     setContentPane(rootContainer);
+    System.out.println("Root container configuré");
   }
 
   public Container getRootContainer() {
