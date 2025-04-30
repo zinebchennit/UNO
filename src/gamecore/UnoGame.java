@@ -44,6 +44,7 @@ public class UnoGame {
                 if (game != null) {
                     updateGameView();
                 }
+                updatePanelLayouts();
             }
         });
 
@@ -90,8 +91,8 @@ public class UnoGame {
             startSoloButton.setBounds((window.getWidth() - buttonWidth) / 2, 
                                     logoPanel.getY() + logoHeight + spacing, 
                                     buttonWidth, buttonHeight);
-            startSoloButton.setBackground(new Color(52, 152, 219));
-            startSoloButton.setTextColor(Color.WHITE);
+            startSoloButton.setBackground(new Color(240, 240, 240)); // Elegant white-grey
+            startSoloButton.setTextColor(new Color(50, 50, 50)); // Dark grey text
             startSoloButton.setFont(new Font("Arial", Font.BOLD, 16));
             System.out.println("Bouton solo créé");
 
@@ -99,8 +100,8 @@ public class UnoGame {
             startMultiButton.setBounds((window.getWidth() - buttonWidth) / 2,
                                      startSoloButton.getY() + buttonHeight + spacing,
                                      buttonWidth, buttonHeight);
-            startMultiButton.setBackground(new Color(231, 76, 60));
-            startMultiButton.setTextColor(Color.WHITE);
+            startMultiButton.setBackground(new Color(240, 240, 240)); // Elegant white-grey
+            startMultiButton.setTextColor(new Color(50, 50, 50)); // Dark grey text
             startMultiButton.setFont(new Font("Arial", Font.BOLD, 16));
             System.out.println("Bouton multi créé");
 
@@ -190,37 +191,37 @@ public class UnoGame {
         // Main panel with responsive layout
         mainPanel = new Panel("mainPanel");
         mainPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
-        mainPanel.setBackground(new Color(34, 139, 34));
+        mainPanel.setBackground(new Color(0, 100, 0));
         mainPanel.setOpaque(true);
         mainPanel.setVisible(false);
         System.out.println("Main panel créé");
 
-        // Computer panel (top)
+        // Computer panel (top) - 25% of height
         computerPanel = new Panel("computerPanel");
         computerPanel.setBounds(0, 0, window.getWidth(), window.getHeight() / 4);
-        computerPanel.setBackground(new Color(45, 180, 45));
+        computerPanel.setBackground(new Color(0, 100, 0));
         computerPanel.setOpaque(true);
         System.out.println("Computer panel créé");
 
-        // Game panel (center)
+        // Game panel (center) - 50% of height, wider side margins
         gamePanel = new Panel("gamePanel");
-        gamePanel.setBounds(window.getWidth() / 4, window.getHeight() / 4, 
-                          window.getWidth() / 2, window.getHeight() / 2);
-        gamePanel.setBackground(new Color(40, 160, 40));
+        gamePanel.setBounds(window.getWidth() / 6, window.getHeight() / 4, 
+                          window.getWidth() * 2/3, window.getHeight() / 2);
+        gamePanel.setBackground(new Color(0, 100, 0));
         gamePanel.setOpaque(true);
         System.out.println("Game panel créé");
 
-        // Player panel (bottom)
+        // Player panel (bottom) - 25% of height
         playerPanel = new Panel("playerPanel");
-        playerPanel.setBounds(0, window.getHeight() * 3 / 4, 
+        playerPanel.setBounds(0, window.getHeight() * 3/4, 
                             window.getWidth(), window.getHeight() / 4);
-        playerPanel.setBackground(new Color(45, 180, 45));
+        playerPanel.setBackground(new Color(0, 100, 0));
         playerPanel.setOpaque(true);
         System.out.println("Player panel créé");
 
-        // Draw button
+        // Draw button - positioned relative to game panel
         drawButton = new Button("Piocher");
-        drawButton.setBounds(window.getWidth() / 2 - 50, window.getHeight() / 2 - 20, 100, 40);
+        drawButton.setBounds(gamePanel.getWidth() / 2 - 50, gamePanel.getHeight() / 2, 100, 40);
         drawButton.setOpaque(true);
         drawButton.setVisible(false);
         System.out.println("Draw button créé");
@@ -291,32 +292,70 @@ public class UnoGame {
         }
     }
 
+    private void updatePanelLayouts() {
+        if (mainPanel != null) {
+            // Update main panel
+            mainPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
+
+            // Update computer panel (25% of height, increased from 20%)
+            computerPanel.setBounds(0, 0, window.getWidth(), window.getHeight() * 1/4);
+
+            // Update game panel (50% of height, reduced from 60%)
+            // and increase side margins (from 1/8 to 1/6 of width)
+            gamePanel.setBounds(window.getWidth() / 6, window.getHeight() / 4,
+                              window.getWidth() * 2/3, window.getHeight() / 2);
+
+            // Update player panel (25% of height, increased from 20%)
+            playerPanel.setBounds(0, window.getHeight() * 3/4,
+                                window.getWidth(), window.getHeight() / 4);
+
+            // Update draw button position
+            if (drawButton.isVisible()) {
+                drawButton.setBounds(gamePanel.getWidth() / 2 - 50, gamePanel.getHeight() / 2, 100, 40);
+            }
+
+            // Force repaint of all panels
+            mainPanel.revalidate();
+            mainPanel.repaint();
+            computerPanel.revalidate();
+            computerPanel.repaint();
+            gamePanel.revalidate();
+            gamePanel.repaint();
+            playerPanel.revalidate();
+            playerPanel.repaint();
+        }
+    }
+
     private void updateGameView() {
         // Calculate responsive card sizes based on panel size
-        int cardWidth = Math.max(60, gamePanel.getWidth() / 8);
+        int cardWidth = Math.max(80, gamePanel.getWidth() / 10); // Increased from /12 to /10
         int cardHeight = (int) (cardWidth * 1.5);
+        
+        // Larger size for center card
+        int centerCardWidth = Math.max(100, gamePanel.getWidth() / 6); // Increased from /8 to /6
+        int centerCardHeight = (int) (centerCardWidth * 1.5);
 
         gamePanel.removeAll();
         playerPanel.removeAll();
         computerPanel.removeAll();
 
-        // Display top card
+        // Display top card (larger size)
         Card topCard = game.getCurrentTopCard();
         if (topCard != null) {
             CardView topCardView = new CardView(topCard);
-            int topCardX = (gamePanel.getWidth() - cardWidth) / 2;
-            int topCardY = (gamePanel.getHeight() - cardHeight) / 2;
-            topCardView.setBounds(topCardX, topCardY, cardWidth, cardHeight);
+            int topCardX = (gamePanel.getWidth() - centerCardWidth) / 2;
+            int topCardY = (gamePanel.getHeight() - centerCardHeight) / 2;
+            topCardView.setBounds(topCardX, topCardY, centerCardWidth, centerCardHeight);
             topCardView.setFaceUp(true);
             gamePanel.addChild(topCardView);
         }
 
-        // Add draw button to game panel
-        drawButton.setBounds(gamePanel.getWidth() / 2 + cardWidth, gamePanel.getHeight() / 2, 100, 40);
+        // Add draw button to game panel (positioned relative to center card)
+        drawButton.setBounds(gamePanel.getWidth() / 2 + centerCardWidth/2 + 20, gamePanel.getHeight() / 2, 100, 40);
         drawButton.setVisible(true);
         gamePanel.addChild(drawButton);
 
-        // Display player cards
+        // Display player cards with responsive spacing
         List<Card> playerCards = null;
         String playerName = "";
         for (Player player : game.getPlayers()) {
@@ -335,10 +374,18 @@ public class UnoGame {
             nameLabel.setBounds(10, 10, 200, 20);
             playerPanel.addChild(nameLabel);
 
-            int spacing = Math.max(10, cardWidth / 8);
-            int totalWidth = (cardWidth + spacing) * playerCards.size() - spacing;
-            int startX = (playerPanel.getWidth() - totalWidth) / 2;
-            int startY = (playerPanel.getHeight() - cardHeight) / 2; // Center vertically
+            // Calculate responsive spacing with overlap for many cards
+            int maxSpacing = cardWidth - cardWidth/3; // Allow cards to overlap if many cards
+            int totalCardsWidth = cardWidth + (playerCards.size() - 1) * maxSpacing;
+            
+            // Adjust spacing if total width is too large
+            int spacing = maxSpacing;
+            if (totalCardsWidth > playerPanel.getWidth() * 0.9) {
+                spacing = (int) ((playerPanel.getWidth() * 0.9 - cardWidth) / (playerCards.size() - 1));
+            }
+            
+            int startX = (playerPanel.getWidth() - (cardWidth + (playerCards.size() - 1) * spacing)) / 2;
+            int startY = (playerPanel.getHeight() - cardHeight) / 2;
 
             for (Card card : playerCards) {
                 CardView cardView = new CardView(card);
@@ -351,14 +398,13 @@ public class UnoGame {
                     }
                 });
                 playerPanel.addChild(cardView);
-                startX += cardWidth + spacing;
+                startX += spacing;
             }
         }
 
-        // Display computer cards (face down)
+        // Display computer cards with responsive spacing
         for (Player player : game.getPlayers()) {
             if (player instanceof ComputerPlayer) {
-                // Add computer name label
                 Label nameLabel = new Label(player.getName());
                 nameLabel.setTextColor(Color.WHITE);
                 nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
@@ -366,17 +412,26 @@ public class UnoGame {
                 computerPanel.addChild(nameLabel);
 
                 int handSize = player.getHandSize();
-                int spacing = Math.max(10, cardWidth / 8);
-                int totalWidth = (cardWidth + spacing) * handSize - spacing;
-                int startX = (computerPanel.getWidth() - totalWidth) / 2;
-                int startY = (computerPanel.getHeight() - cardHeight) / 2; // Center vertically
+                
+                // Calculate responsive spacing with overlap for many cards
+                int maxSpacing = cardWidth - cardWidth/3;
+                int totalCardsWidth = cardWidth + (handSize - 1) * maxSpacing;
+                
+                // Adjust spacing if total width is too large
+                int spacing = maxSpacing;
+                if (totalCardsWidth > computerPanel.getWidth() * 0.9) {
+                    spacing = (int) ((computerPanel.getWidth() * 0.9 - cardWidth) / (handSize - 1));
+                }
+                
+                int startX = (computerPanel.getWidth() - (cardWidth + (handSize - 1) * spacing)) / 2;
+                int startY = (computerPanel.getHeight() - cardHeight) / 2;
 
                 for (int i = 0; i < handSize; i++) {
                     CardView cardView = new CardView(new Card("Noir", "Hidden", 0));
                     cardView.setBounds(startX, startY, cardWidth, cardHeight);
                     cardView.setFaceUp(false);
                     computerPanel.addChild(cardView);
-                    startX += cardWidth + spacing;
+                    startX += spacing;
                 }
                 break;
             }
@@ -386,6 +441,7 @@ public class UnoGame {
             announceWinner();
         }
 
+        // Force repaint of all panels
         gamePanel.revalidate();
         gamePanel.repaint();
         playerPanel.revalidate();

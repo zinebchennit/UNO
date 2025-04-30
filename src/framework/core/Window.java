@@ -24,11 +24,30 @@ public class Window extends JFrame {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        GradientPaint gp = new GradientPaint(0, 0, new Color(45, 45, 48),
-            0, getHeight(), new Color(30, 30, 33));
-        g2d.setPaint(gp);
+        // Create poker table felt background
+        Color feltColor = new Color(0, 100, 0); // Dark green felt color
+        g2d.setColor(feltColor);
         g2d.fillRect(0, 0, getWidth(), getHeight());
+
+        // Add subtle texture pattern
+        g2d.setColor(new Color(0, 120, 0, 30));
+        for (int i = 0; i < getWidth(); i += 4) {
+          for (int j = 0; j < getHeight(); j += 4) {
+            g2d.fillOval(i, j, 2, 2);
+          }
+        }
+
+        // Add darker border
+        g2d.setColor(new Color(0, 50, 0));
+        g2d.setStroke(new BasicStroke(20));
+        g2d.drawRect(10, 10, getWidth() - 20, getHeight() - 20);
+
+        // Add inner border highlight
+        g2d.setColor(new Color(0, 150, 0, 100));
+        g2d.setStroke(new BasicStroke(2));
+        g2d.drawRect(20, 20, getWidth() - 40, getHeight() - 40);
       }
     };
     rootContainer.setBounds(0, 0, width, height);

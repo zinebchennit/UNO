@@ -25,31 +25,44 @@ public class Panel extends Container {
     // Appliquer l'opacité
     g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity));
 
-    // Fond avec dégradé subtil
+    // Fond avec texture de feutre de poker plus sophistiquée
+    Color baseFeltColor = new Color(0, 80, 0); // Darker green base
+    Color highlightFeltColor = new Color(0, 120, 0); // Brighter green highlight
+    
+    // Dégradé subtil pour le fond
     GradientPaint gradient = new GradientPaint(
-        0, 0, new Color(backgroundColor.getRed() + 5, backgroundColor.getGreen() + 5, backgroundColor.getBlue() + 5),
-        0, getHeight(), backgroundColor);
+        0, 0, highlightFeltColor,
+        0, getHeight(), baseFeltColor);
     g2d.setPaint(gradient);
     g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
 
-    if (useTexture) {
-      // Ajouter une texture subtile
-      g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
-      for (int i = 0; i < getWidth(); i += 4) {
-        for (int j = 0; j < getHeight(); j += 4) {
-          if ((i + j) % 8 == 0) {
-            g2d.setColor(Color.WHITE);
-            g2d.fillRect(i, j, 1, 1);
-          }
-        }
+    // Texture de feutre plus sophistiquée
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
+    for (int i = 0; i < getWidth(); i += 6) {
+      for (int j = 0; j < getHeight(); j += 6) {
+        // Variation de taille et d'opacité pour un effet plus naturel
+        int size = (i + j) % 12 == 0 ? 3 : 2;
+        int alpha = (i + j) % 12 == 0 ? 40 : 20;
+        g2d.setColor(new Color(0, 140, 0, alpha));
+        g2d.fillOval(i, j, size, size);
       }
     }
 
-    // Bordure avec effet de brillance
-    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
-    g2d.setColor(Color.WHITE);
-    g2d.setStroke(new BasicStroke(1.5f));
-    g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+    // Bordure extérieure élégante (réduite)
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+    g2d.setColor(new Color(0, 40, 0));
+    g2d.setStroke(new BasicStroke(12, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    g2d.drawRoundRect(6, 6, getWidth() - 12, getHeight() - 12, 15, 15);
+
+    // Bordure intérieure avec effet de brillance (réduite)
+    g2d.setColor(new Color(0, 160, 0, 120));
+    g2d.setStroke(new BasicStroke(2));
+    g2d.drawRoundRect(12, 12, getWidth() - 24, getHeight() - 24, 15, 15);
+
+    // Effet de brillance supplémentaire
+    g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+    g2d.setColor(new Color(255, 255, 255, 30));
+    g2d.fillOval(0, 0, getWidth() / 2, getHeight() / 2);
 
     g2d.dispose();
     super.paintComponent(g);
