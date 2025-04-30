@@ -7,11 +7,13 @@ import framework.widgets.Button;
 import framework.widgets.CardView;
 import framework.widgets.Label;
 import framework.widgets.Panel;
+import framework.widgets.TextField;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -27,6 +29,12 @@ public class UnoGame {
     private Button startSoloButton;
     private Button startMultiButton;
     private Button drawButton;
+    private Panel playerSelectionPanel;
+    private List<TextField> playerNameFields;
+    private Button startGameButton;
+    private Button addPlayerButton;
+    private Button removePlayerButton;
+    private int maxPlayers = 4;
 
     public UnoGame() {
         initializeUI();
@@ -177,8 +185,7 @@ public class UnoGame {
 
             @Override
             public void onMouseClick(MouseEvent event) {
-                startNewGame(2, 0);
-                showGameScreen();
+                showPlayerSelectionScreen();
             }
 
             @Override
@@ -232,9 +239,103 @@ public class UnoGame {
         mainPanel.addChild(drawButton);
         System.out.println("Tous les panels de jeu ajoutés au main panel");
 
+        // Initialize player selection panel
+        playerSelectionPanel = new Panel("playerSelectionPanel");
+        playerSelectionPanel.setBounds(0, 0, window.getWidth(), window.getHeight());
+        playerSelectionPanel.setBackground(new Color(0, 100, 0));
+        playerSelectionPanel.setOpaque(true);
+        playerSelectionPanel.setVisible(false);
+
+        // Add title label
+        Label titleLabel = new Label("Player Setup");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setTextColor(Color.WHITE);
+        titleLabel.setBounds(window.getWidth() / 2 - 100, 50, 200, 30);
+        playerSelectionPanel.addChild(titleLabel);
+
+        // Initialize buttons with new colors and styles
+        startGameButton = new Button("Start Game");
+        startGameButton.setBounds(window.getWidth() / 2 + 10, window.getHeight() - 100, 150, 40);
+        startGameButton.setBackground(new Color(46, 204, 113)); // Green color
+        startGameButton.setTextColor(Color.WHITE);
+
+        addPlayerButton = new Button("Add Player");
+        addPlayerButton.setBounds(window.getWidth() / 2 - 160, window.getHeight() - 100, 150, 40);
+        addPlayerButton.setBackground(new Color(52, 152, 219)); // Blue color
+        addPlayerButton.setTextColor(Color.WHITE);
+
+        removePlayerButton = new Button("Remove Player");
+        removePlayerButton.setBounds(window.getWidth() / 2 - 160, window.getHeight() - 150, 150, 40);
+        removePlayerButton.setBackground(new Color(231, 76, 60)); // Red color
+        removePlayerButton.setTextColor(Color.WHITE);
+
+        // Add event listeners for all buttons
+        startGameButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                System.out.println("Start Game button clicked!");
+                startMultiplayerGame();
+            }
+            @Override public void onMousePress(MouseEvent event) {}
+            @Override public void onMouseRelease(MouseEvent event) {}
+            @Override public void onMouseEnter(MouseEvent event) {
+                startGameButton.setBackground(new Color(39, 174, 96)); // Darker green
+            }
+            @Override public void onMouseExit(MouseEvent event) {
+                startGameButton.setBackground(new Color(46, 204, 113)); // Original green
+            }
+        });
+
+        addPlayerButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                System.out.println("Add Player button clicked!");
+                addPlayerField();
+            }
+            @Override public void onMousePress(MouseEvent event) {}
+            @Override public void onMouseRelease(MouseEvent event) {}
+            @Override public void onMouseEnter(MouseEvent event) {
+                addPlayerButton.setBackground(new Color(41, 128, 185)); // Darker blue
+            }
+            @Override public void onMouseExit(MouseEvent event) {
+                addPlayerButton.setBackground(new Color(52, 152, 219)); // Original blue
+            }
+        });
+
+        removePlayerButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                System.out.println("Remove Player button clicked!");
+                removePlayerField();
+            }
+            @Override public void onMousePress(MouseEvent event) {}
+            @Override public void onMouseRelease(MouseEvent event) {}
+            @Override public void onMouseEnter(MouseEvent event) {
+                removePlayerButton.setBackground(new Color(192, 57, 43)); // Darker red
+            }
+            @Override public void onMouseExit(MouseEvent event) {
+                removePlayerButton.setBackground(new Color(231, 76, 60)); // Original red
+            }
+        });
+
+        // Add buttons to panel
+        playerSelectionPanel.addChild(startGameButton);
+        playerSelectionPanel.addChild(addPlayerButton);
+        playerSelectionPanel.addChild(removePlayerButton);
+
+        // Add panels to window
         window.getRootContainer().addChild(menuPanel);
+        window.getRootContainer().addChild(playerSelectionPanel);
         window.getRootContainer().addChild(mainPanel);
-        System.out.println("Panels principaux ajoutés à la fenêtre");
+
+        // Initialize player name fields list
+        playerNameFields = new ArrayList<>();
+
+        // Add initial player fields
+        addPlayerField();
+        addPlayerField();
+
+        System.out.println("UI initialization complete");
 
         window.setVisible(true);
         System.out.println("Fenêtre rendue visible");
@@ -269,11 +370,15 @@ public class UnoGame {
 
     private void showGameScreen() {
         menuPanel.setVisible(false);
+        playerSelectionPanel.setVisible(false);
         mainPanel.setVisible(true);
+        drawButton.setVisible(true);
     }
 
     private void startNewGame(int humanPlayers, int computerPlayers) {
+        System.out.println("Starting new game with " + humanPlayers + " humans and " + computerPlayers + " computers");
         game = new Game(humanPlayers, computerPlayers);
+        game.initializeGame(); // Make sure game is initialized
         drawButton.setVisible(true);
         updateGameView();
     }
@@ -327,154 +432,189 @@ public class UnoGame {
     }
 
     private void updateGameView() {
-        // Calculate responsive card sizes based on panel size
-        int cardWidth = Math.max(80, gamePanel.getWidth() / 10); // Increased from /12 to /10
-        int cardHeight = (int) (cardWidth * 1.5);
-        
-        // Larger size for center card
-        int centerCardWidth = Math.max(100, gamePanel.getWidth() / 6); // Increased from /8 to /6
-        int centerCardHeight = (int) (centerCardWidth * 1.5);
+        System.out.println("=== Updating Game View ===");
+        try {
+            // Clear all panels
+            gamePanel.removeAll();
+            playerPanel.removeAll();
+            computerPanel.removeAll();
 
-        gamePanel.removeAll();
-        playerPanel.removeAll();
-        computerPanel.removeAll();
-
-        // Display top card (larger size)
-        Card topCard = game.getCurrentTopCard();
-        if (topCard != null) {
-            CardView topCardView = new CardView(topCard);
-            int topCardX = (gamePanel.getWidth() - centerCardWidth) / 2;
-            int topCardY = (gamePanel.getHeight() - centerCardHeight) / 2;
-            topCardView.setBounds(topCardX, topCardY, centerCardWidth, centerCardHeight);
-            topCardView.setFaceUp(true);
-            gamePanel.addChild(topCardView);
-        }
-
-        // Add draw button to game panel (positioned relative to center card)
-        drawButton.setBounds(gamePanel.getWidth() / 2 + centerCardWidth/2 + 20, gamePanel.getHeight() / 2, 100, 40);
-        drawButton.setVisible(true);
-        gamePanel.addChild(drawButton);
-
-        // Display player cards with responsive spacing
-        List<Card> playerCards = null;
-        String playerName = "";
-        for (Player player : game.getPlayers()) {
-            if (player instanceof HumanPlayer) {
-                playerCards = ((HumanPlayer) player).getHand();
-                playerName = player.getName();
-                break;
+            if (game == null) {
+                System.err.println("ERROR: Game is null!");
+                return;
             }
-        }
 
-        if (playerCards != null) {
-            // Add player name label
-            Label nameLabel = new Label(playerName);
-            nameLabel.setTextColor(Color.WHITE);
-            nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
-            nameLabel.setBounds(10, 10, 200, 20);
-            playerPanel.addChild(nameLabel);
-
-            // Calculate responsive spacing with overlap for many cards
-            int maxSpacing = cardWidth - cardWidth/3; // Allow cards to overlap if many cards
-            int totalCardsWidth = cardWidth + (playerCards.size() - 1) * maxSpacing;
-            
-            // Adjust spacing if total width is too large
-            int spacing = maxSpacing;
-            if (totalCardsWidth > playerPanel.getWidth() * 0.9) {
-                spacing = (int) ((playerPanel.getWidth() * 0.9 - cardWidth) / (playerCards.size() - 1));
+            // Display top card
+            Card topCard = game.getCurrentTopCard();
+            if (topCard != null) {
+                System.out.println("Displaying top card: " + topCard);
+                CardView topCardView = new CardView(topCard);
+                int cardWidth = 100;
+                int cardHeight = 150;
+                topCardView.setBounds(
+                    (gamePanel.getWidth() - cardWidth) / 2,
+                    (gamePanel.getHeight() - cardHeight) / 2,
+                    cardWidth,
+                    cardHeight
+                );
+                topCardView.setFaceUp(true);
+                gamePanel.addChild(topCardView);
             }
-            
-            int startX = (playerPanel.getWidth() - (cardWidth + (playerCards.size() - 1) * spacing)) / 2;
-            int startY = (playerPanel.getHeight() - cardHeight) / 2;
 
-            for (Card card : playerCards) {
-                CardView cardView = new CardView(card);
-                cardView.setBounds(startX, startY, cardWidth, cardHeight);
-                cardView.setFaceUp(true);
-                cardView.addCardClickListener(new CardView.CardClickListener() {
-                    @Override
-                    public void onCardClicked(CardView cardView) {
-                        handleCardClick(cardView);
-                    }
-                });
-                playerPanel.addChild(cardView);
-                startX += spacing;
+            // Add draw button
+            drawButton.setBounds(
+                gamePanel.getWidth() / 2 + 120,
+                gamePanel.getHeight() / 2 - 20,
+                100,
+                40
+            );
+            gamePanel.addChild(drawButton);
+
+            // Display players and their cards
+            List<Player> players = game.getPlayers();
+            if (players == null || players.isEmpty()) {
+                System.err.println("ERROR: No players in game!");
+                return;
             }
-        }
 
-        // Display computer cards with responsive spacing
-        for (Player player : game.getPlayers()) {
-            if (player instanceof ComputerPlayer) {
+            for (Player player : players) {
+                Panel targetPanel = player instanceof HumanPlayer ? playerPanel : computerPanel;
+                
+                // Add player name with visual effect for current player
                 Label nameLabel = new Label(player.getName());
-                nameLabel.setTextColor(Color.WHITE);
                 nameLabel.setFont(new Font("Arial", Font.BOLD, 16));
+                
+                // Highlight current player's name
+                if (player == game.getCurrentPlayer()) {
+                    nameLabel.setTextColor(new Color(255, 255, 0)); // Yellow color for current player
+                    nameLabel.setFont(new Font("Arial", Font.BOLD, 18)); // Slightly larger font
+                } else {
+                    nameLabel.setTextColor(Color.WHITE);
+                }
+                
                 nameLabel.setBounds(10, 10, 200, 20);
-                computerPanel.addChild(nameLabel);
+                targetPanel.addChild(nameLabel);
 
-                int handSize = player.getHandSize();
+                // Display cards
+                List<Card> cards = player.getHand();
                 
-                // Calculate responsive spacing with overlap for many cards
-                int maxSpacing = cardWidth - cardWidth/3;
-                int totalCardsWidth = cardWidth + (handSize - 1) * maxSpacing;
-                
-                // Adjust spacing if total width is too large
-                int spacing = maxSpacing;
-                if (totalCardsWidth > computerPanel.getWidth() * 0.9) {
-                    spacing = (int) ((computerPanel.getWidth() * 0.9 - cardWidth) / (handSize - 1));
-                }
-                
-                int startX = (computerPanel.getWidth() - (cardWidth + (handSize - 1) * spacing)) / 2;
-                int startY = (computerPanel.getHeight() - cardHeight) / 2;
+                // Calculate card layout
+                int cardWidth = 80;
+                int cardHeight = 120;
+                int spacing = 30;
+                int totalWidth = (cards.size() * cardWidth) - ((cards.size() - 1) * spacing);
+                int startX = (targetPanel.getWidth() - totalWidth) / 2;
+                int startY = (targetPanel.getHeight() - cardHeight) / 2;
 
-                for (int i = 0; i < handSize; i++) {
-                    CardView cardView = new CardView(new Card("Noir", "Hidden", 0));
-                    cardView.setBounds(startX, startY, cardWidth, cardHeight);
-                    cardView.setFaceUp(false);
-                    computerPanel.addChild(cardView);
-                    startX += spacing;
+                for (int i = 0; i < cards.size(); i++) {
+                    Card card = cards.get(i);
+                    if (card == null) continue;
+
+                    CardView cardView = new CardView(card);
+                    cardView.setBounds(
+                        startX + (i * (cardWidth - spacing)),
+                        startY,
+                        cardWidth,
+                        cardHeight
+                    );
+                    // Afficher les cartes face cachée pour l'ordinateur
+                    cardView.setFaceUp(player instanceof HumanPlayer);
+                    
+                    if (player instanceof HumanPlayer) {
+                        final int cardIndex = i;
+                        cardView.addCardClickListener(new CardView.CardClickListener() {
+                            @Override
+                            public void onCardClicked(CardView cv) {
+                                handleCardClick(cv);
+                            }
+                        });
+                    }
+                    
+                    targetPanel.addChild(cardView);
                 }
-                break;
             }
-        }
 
-        if (game.isGameOver()) {
-            announceWinner();
+            // Force repaint
+            mainPanel.revalidate();
+            mainPanel.repaint();
+            gamePanel.revalidate();
+            gamePanel.repaint();
+            playerPanel.revalidate();
+            playerPanel.repaint();
+            computerPanel.revalidate();
+            computerPanel.repaint();
+            
+        } catch (Exception e) {
+            System.err.println("ERROR: Failed to update game view");
+            e.printStackTrace();
         }
-
-        // Force repaint of all panels
-        gamePanel.revalidate();
-        gamePanel.repaint();
-        playerPanel.revalidate();
-        playerPanel.repaint();
-        computerPanel.revalidate();
-        computerPanel.repaint();
     }
 
     private void handleCardClick(CardView cardView) {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof HumanPlayer) {
-            List<Card> playerCards = game.getCurrentPlayerCards();
+            List<Card> playerCards = currentPlayer.getHand();
             int cardIndex = playerCards.indexOf(cardView.getCard());
-            if (cardIndex != -1 && game.playCard(cardIndex)) {
-                // Mettre à jour l'interface après avoir joué la carte
-                updateGameView();
+            
+            if (cardIndex != -1) {
+                Card selectedCard = playerCards.get(cardIndex);
+                Card topCard = game.getCurrentTopCard();
                 
-                // Réduire le délai pour les cartes spéciales à 500ms
-                Card playedCard = game.getCurrentTopCard();
-                if (playedCard.getType().equals("Draw Two") || playedCard.getType().equals("Wild Draw Four")) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                if (selectedCard.canPlayOn(topCard)) {
+                    if (game.playCard(cardIndex)) {
+                        // Mettre à jour l'affichage après avoir joué la carte
+                        updateGameView();
+                        
+                        // Vérifier si le jeu est terminé
+                        if (game.isGameOver()) {
+                            announceWinner();
+                            return;
+                        }
+                        
+                        // Forcer le tour de l'ordinateur
+                        if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                            // Utiliser SwingUtilities.invokeLater pour éviter le blocage de l'interface
+                            javax.swing.SwingUtilities.invokeLater(() -> {
+                                try {
+                                    Thread.sleep(1000); // Délai pour voir l'action
+                                    playComputerTurn();
+                                    if (game.isGameOver()) {
+                                        announceWinner();
+                                    }
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
                     }
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(
+                        window,
+                        "Carte invalide! Vous ne pouvez pas jouer cette carte.",
+                        "Carte invalide",
+                        javax.swing.JOptionPane.WARNING_MESSAGE
+                    );
                 }
+            }
+        }
+    }
 
-                // Passer au tour suivant
-                game.moveToNextPlayer();
-                // Faire jouer l'ordinateur tant que c'est son tour
-                while (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                    playComputerTurn();
-                }
+    private void handleNextTurn() {
+        // Check if game is over
+        if (game.isGameOver()) {
+            announceWinner();
+            return;
+        }
+        
+        // Move to next player
+        game.moveToNextPlayer();
+        
+        // If next player is computer, play automatically
+        while (game.getCurrentPlayer() instanceof ComputerPlayer) {
+            playComputerTurn();
+            if (game.isGameOver()) {
+                announceWinner();
+                return;
             }
         }
     }
@@ -482,27 +622,30 @@ public class UnoGame {
     private void playComputerTurn() {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof ComputerPlayer) {
-            // Réduire le délai à 500ms
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                Thread.currentThread().interrupt();
-            }
-
-            // Laisser l'ordinateur jouer son tour
+            System.out.println("Tour de l'ordinateur: " + currentPlayer.getName());
             boolean played = game.playComputerCard();
             
-            if (!played) {
-                // Si l'ordinateur ne peut pas jouer, il pioche une carte
-                currentPlayer.addCard(game.drawCard());
-                // Passer au joueur suivant
-                game.moveToNextPlayer();
+            if (played) {
+                System.out.println("L'ordinateur a joué une carte");
+            } else {
+                System.out.println("L'ordinateur pioche une carte");
+                Card drawnCard = game.drawCard();
+                if (drawnCard != null) {
+                    currentPlayer.addCard(drawnCard);
+                }
             }
-
-            // Mettre à jour l'interface après chaque action
+            
             updateGameView();
-            System.out.println("Tour de l'ordinateur terminé");
+            
+            // Si le prochain joueur est encore un ordinateur, continuer
+            if (game.getCurrentPlayer() instanceof ComputerPlayer && !game.isGameOver()) {
+                try {
+                    Thread.sleep(1000);
+                    playComputerTurn();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -515,11 +658,239 @@ public class UnoGame {
             }
         }
         if (winner != null) {
-            javax.swing.JOptionPane.showMessageDialog(window, 
-                winner + " a gagné la partie!", 
-                "Fin de la partie", 
-                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(
+                window,
+                winner + " a gagné la partie!",
+                "Fin de la partie",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
         }
+    }
+
+    private void addPlayerField() {
+        if (playerNameFields.size() >= maxPlayers) {
+            return;
+        }
+
+        int index = playerNameFields.size();
+        
+        // Create a panel for each player's settings
+        Panel playerSettingsPanel = new Panel();
+        playerSettingsPanel.setBounds(
+            window.getWidth() / 2 - 200,
+            150 + index * 100,
+            400,
+            80
+        );
+
+        // Add player name field
+        TextField field = new TextField("Player " + (index + 1));
+        field.setBounds(0, 0, 200, 40);
+        playerNameFields.add(field);
+        playerSettingsPanel.addChild(field);
+
+        // Add player type selection
+        Button humanButton = new Button("Human");
+        humanButton.setBounds(210, 0, 90, 40);
+        humanButton.setBackground(new Color(52, 152, 219));
+        humanButton.setTextColor(Color.WHITE);
+        humanButton.setSelected(true);
+
+        Button computerButton = new Button("Computer");
+        computerButton.setBounds(310, 0, 90, 40);
+        computerButton.setBackground(new Color(231, 76, 60));
+        computerButton.setTextColor(Color.WHITE);
+
+        // Add click listeners to handle selection
+        humanButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                humanButton.setSelected(true);
+                computerButton.setSelected(false);
+            }
+            @Override public void onMousePress(MouseEvent event) {}
+            @Override public void onMouseRelease(MouseEvent event) {}
+            @Override public void onMouseEnter(MouseEvent event) {}
+            @Override public void onMouseExit(MouseEvent event) {}
+        });
+
+        computerButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                computerButton.setSelected(true);
+                humanButton.setSelected(false);
+            }
+            @Override public void onMousePress(MouseEvent event) {}
+            @Override public void onMouseRelease(MouseEvent event) {}
+            @Override public void onMouseEnter(MouseEvent event) {}
+            @Override public void onMouseExit(MouseEvent event) {}
+        });
+
+        playerSettingsPanel.addChild(humanButton);
+        playerSettingsPanel.addChild(computerButton);
+
+        playerSelectionPanel.addChild(playerSettingsPanel);
+        playerSelectionPanel.revalidate();
+        playerSelectionPanel.repaint();
+
+        updatePlayerButtons();
+    }
+
+    private void removePlayerField() {
+        if (playerNameFields.size() <= 2) {
+            return;
+        }
+
+        // Remove the last player settings panel
+        Panel lastPanel = (Panel) playerSelectionPanel.getChildren().get(playerSelectionPanel.getChildren().size() - 1);
+        playerSelectionPanel.removeChild(lastPanel);
+        
+        // Remove the last name field
+        playerNameFields.remove(playerNameFields.size() - 1);
+        
+        playerSelectionPanel.revalidate();
+        playerSelectionPanel.repaint();
+
+        updatePlayerButtons();
+    }
+
+    private void updatePlayerButtons() {
+        addPlayerButton.setEnabled(playerNameFields.size() < maxPlayers);
+        removePlayerButton.setEnabled(playerNameFields.size() > 2);
+    }
+
+    private void startMultiplayerGame() {
+        System.out.println("=== Starting Multiplayer Game ===");
+        System.out.println("Current game state: " + (game == null ? "null" : "initialized"));
+        
+        if (playerNameFields == null || playerNameFields.isEmpty()) {
+            System.err.println("ERROR: No player fields found!");
+            return;
+        }
+
+        try {
+            // Get player information
+            List<String> playerNames = new ArrayList<>();
+            List<Boolean> isHuman = new ArrayList<>();
+
+            System.out.println("Processing " + playerNameFields.size() + " player fields");
+            for (int i = 0; i < playerNameFields.size(); i++) {
+                TextField field = playerNameFields.get(i);
+                String name = field.getText().trim();
+                if (name.isEmpty()) {
+                    name = field.getPlaceholder();
+                }
+                playerNames.add(name);
+                System.out.println("Player " + (i + 1) + " name: " + name);
+
+                try {
+                    Panel playerSettingsPanel = (Panel) playerSelectionPanel.getChildren().get(i + 1);
+                    Button humanButton = (Button) playerSettingsPanel.getChildren().get(1);
+                    boolean isHumanPlayer = humanButton.isSelected();
+                    isHuman.add(isHumanPlayer);
+                    System.out.println("Player " + (i + 1) + " type: " + (isHumanPlayer ? "Human" : "Computer"));
+                } catch (Exception e) {
+                    System.err.println("ERROR: Failed to get player type for player " + (i + 1));
+                    e.printStackTrace();
+                    return;
+                }
+            }
+
+            // Create and initialize game
+            int humanCount = (int) isHuman.stream().filter(b -> b).count();
+            int computerCount = isHuman.size() - humanCount;
+            System.out.println("Creating new game with " + humanCount + " humans and " + computerCount + " computers");
+
+            game = new Game(humanCount, computerCount);
+            System.out.println("Game instance created: " + game);
+
+            // Set up players with their names
+            List<Player> players = game.getPlayers();
+            int humanIndex = 0;
+            int computerIndex = humanCount;
+            for (int i = 0; i < playerNames.size(); i++) {
+                try {
+                    if (isHuman.get(i)) {
+                        System.out.println("Setting up human player " + humanIndex + ": " + playerNames.get(i));
+                        players.set(humanIndex, new HumanPlayer(playerNames.get(i)));
+                        humanIndex++;
+                    } else {
+                        System.out.println("Setting up computer player " + computerIndex + ": " + playerNames.get(i));
+                        players.set(computerIndex, new ComputerPlayer(playerNames.get(i)));
+                        computerIndex++;
+                    }
+                } catch (Exception e) {
+                    System.err.println("ERROR: Failed to set up player " + i);
+                    e.printStackTrace();
+                    return;
+                }
+            }
+
+            // Initialize game and deal cards
+            System.out.println("Initializing game...");
+            game.initializeGame();
+            System.out.println("Game initialized");
+
+            // Update UI visibility
+            System.out.println("Updating UI visibility...");
+            menuPanel.setVisible(false);
+            playerSelectionPanel.setVisible(false);
+            mainPanel.setVisible(true);
+            drawButton.setVisible(true);
+
+            // Update game view to show cards
+            System.out.println("Updating game view...");
+            updateGameView();
+
+            // Force window update
+            System.out.println("Forcing window update...");
+            window.revalidate();
+            window.repaint();
+            System.out.println("=== Game Started Successfully ===");
+
+        } catch (Exception e) {
+            System.err.println("ERROR: Failed to start game");
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(
+                window,
+                "Failed to start game: " + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+
+    private void showPlayerSelectionScreen() {
+        System.out.println("Showing player selection screen");
+        System.out.println("Current panel visibility:");
+        System.out.println("Menu Panel visible: " + menuPanel.isVisible());
+        System.out.println("Player Selection Panel visible: " + playerSelectionPanel.isVisible());
+        System.out.println("Main Panel visible: " + mainPanel.isVisible());
+
+        menuPanel.setVisible(false);
+        playerSelectionPanel.setVisible(true);
+        mainPanel.setVisible(false);
+
+        System.out.println("After visibility update:");
+        System.out.println("Menu Panel visible: " + menuPanel.isVisible());
+        System.out.println("Player Selection Panel visible: " + playerSelectionPanel.isVisible());
+        System.out.println("Main Panel visible: " + mainPanel.isVisible());
+
+        // Make sure buttons are properly positioned and visible
+        startGameButton.setBounds(window.getWidth() / 2 + 10, window.getHeight() - 100, 150, 40);
+        addPlayerButton.setBounds(window.getWidth() / 2 - 160, window.getHeight() - 100, 150, 40);
+        removePlayerButton.setBounds(window.getWidth() / 2 - 160, window.getHeight() - 150, 150, 40);
+
+        // Make sure buttons are visible
+        startGameButton.setVisible(true);
+        addPlayerButton.setVisible(true);
+        removePlayerButton.setVisible(true);
+
+        playerSelectionPanel.revalidate();
+        playerSelectionPanel.repaint();
+        window.revalidate();
+        window.repaint();
+        System.out.println("Player selection screen setup complete");
     }
 
     public static void main(String[] args) {
