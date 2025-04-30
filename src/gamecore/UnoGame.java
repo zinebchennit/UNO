@@ -273,23 +273,38 @@ public class UnoGame {
 
     private void startNewGame(int humanPlayers, int computerPlayers) {
         game = new Game(humanPlayers, computerPlayers);
+        showGameScreen();
         drawButton.setVisible(true);
         updateGameView();
+        
+        // Vérifier si c'est le tour de l'ordinateur au début du jeu
+        if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+            playComputerTurn();
+        }
     }
 
     private void drawCard() {
         Player currentPlayer = game.getCurrentPlayer();
         if (currentPlayer instanceof HumanPlayer) {
             // Le joueur humain pioche une carte
-            currentPlayer.addCard(game.drawCard());
-            updateGameView();
-            
-            // Passer au tour suivant
-            game.moveToNextPlayer();
-            
-            // Si c'est maintenant le tour de l'ordinateur, le faire jouer
-            if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                playComputerTurn();
+            Card drawnCard = game.drawCard();
+            if (drawnCard != null) {
+                currentPlayer.addCard(drawnCard);
+                updateGameView();
+                
+                // Passer au tour suivant
+                game.moveToNextPlayer();
+                
+                // Si c'est maintenant le tour de l'ordinateur, le faire jouer
+                if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                    playComputerTurn();
+                }
+            } else {
+                // Si le deck est vide, afficher un message
+                javax.swing.JOptionPane.showMessageDialog(window, 
+                    "Le deck est vide!", 
+                    "Pioche impossible", 
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
             }
         }
     }
@@ -316,7 +331,7 @@ public class UnoGame {
 
         // Add draw button to game panel
         drawButton.setBounds(gamePanel.getWidth() / 2 + cardWidth, gamePanel.getHeight() / 2, 100, 40);
-        drawButton.setVisible(true);
+        drawButton.setVisible(game.getCurrentPlayer() instanceof HumanPlayer);
         gamePanel.addChild(drawButton);
 
         // Display player cards

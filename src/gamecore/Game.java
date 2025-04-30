@@ -47,6 +47,7 @@ public class Game {
             }
         } while (topCard.getType().equals("Wild") || topCard.getType().equals("Wild Draw Four"));
     }
+    
 
     public void playGame() {
         while (!isGameOver()) {
@@ -133,15 +134,18 @@ public class Game {
         switch (cardType) {
             case "Skip" -> skipNextPlayer();
             case "Reverse" -> reverseDirection();
-            case "DrawTwo" -> nextPlayerDrawCards(2);
+            case "Draw Two" -> {
+                nextPlayerDrawCards(2);
+                // Pas besoin d'appeler moveToNextPlayer ici car nextPlayerDrawCards le fait déjà
+            }
             case "Wild" -> handleWildCard();
-            case "WildDrawFour" -> {
-                handleWildCard();
+            case "Wild Draw Four" -> {
                 nextPlayerDrawCards(4);
+                handleWildCard();
+                // Pas besoin d'appeler moveToNextPlayer ici car handleWildCard le fait déjà
             }
             default -> {
-                // Pour les cartes normales, on ne fait rien car le passage au joueur suivant
-                // est déjà géré dans playComputerCard et playCard
+                // Pour les cartes normales, on ne fait rien
             }
         }
     }
@@ -169,7 +173,7 @@ public class Game {
                 System.out.println(player.getName() + " pioche une carte");
             }
         }
-        // Ne pas passer au joueur suivant ici, car le joueur qui a pioché doit jouer son tour
+        // Ne pas appeler moveToNextPlayer() ici pour éviter de sauter un joueur
     }
 
     private void handleWildCard() {
@@ -222,13 +226,14 @@ public class Game {
             boolean played = currentPlayer.playTurn(topCard);
             if (played) {
                 Card playedCard = currentPlayer.getLastPlayedCard();
+                // Wild cards: définir la couleur avant de gérer l'effet
                 if (playedCard.getType().equals("Wild") || playedCard.getType().equals("Wild Draw Four")) {
-                    String newColor = ((ComputerPlayer) currentPlayer).chooseColor();
+                    String newColor = currentPlayer.chooseColor();
                     playedCard.setColor(newColor);
                 }
                 topCard = playedCard;
                 handleCardEffect(playedCard);
-                moveToNextPlayer();
+                // Ne pas appeler moveToNextPlayer ici car handleCardEffect gère déjà les mouvements nécessaires
                 return true;
             } else {
                 currentPlayer.addCard(drawCard());

@@ -54,6 +54,7 @@ public class Component extends JComponent {
     }
 
     protected void notifyMouseClick(MouseEvent event) {
+        if (listeners.isEmpty()) return;  // Early exit si aucun listener
         for (EventListener listener : listeners) {
             listener.onMouseClick(event);
         }

@@ -12,6 +12,16 @@ public class Container extends Component {
     children = new ArrayList<>();
     setLayout(null);
   }
+  public void setChildBounds(Component child, int x, int y, int width, int height) {
+    child.setBounds(x, y, width, height);
+}
+public void resizeChild(Component child, int newWidth, int newHeight) {
+  child.setSize(newWidth, newHeight);
+  revalidate();
+  repaint();
+}
+
+
 
   public void addChild(Component child) {
     children.add(child);
