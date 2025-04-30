@@ -37,6 +37,8 @@ public class UnoGame {
     private Button addPlayerButton;
     private Button removePlayerButton;
     private int maxPlayers = 4;
+    private boolean hasDrawnThisTurn = false;
+    private Button passButton = new Button("Passer");
 
     public UnoGame() {
         initializeUI();
@@ -386,6 +388,35 @@ public class UnoGame {
             public void onMouseExit(MouseEvent event) {
             }
         });
+        passButton.addEventListener(new EventListener() {
+            @Override
+            public void onMouseClick(MouseEvent event) {
+                if (hasDrawnThisTurn) {
+                    hasDrawnThisTurn = false;
+                    game.moveToNextPlayer();
+                    updateGameView();
+                    if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                        triggerComputerTurnWithDelay();
+                    }
+                }
+            }
+
+            @Override
+            public void onMousePress(MouseEvent event) {
+            }
+
+            @Override
+            public void onMouseRelease(MouseEvent event) {
+            }
+
+            @Override
+            public void onMouseEnter(MouseEvent event) {
+            }
+
+            @Override
+            public void onMouseExit(MouseEvent event) {
+            }
+        });
     }
 
     private void showGameScreen() {
@@ -429,31 +460,20 @@ public class UnoGame {
 
     private void drawCard() {
         Player currentPlayer = game.getCurrentPlayer();
-        if (currentPlayer instanceof HumanPlayer) {
-            // Le joueur humain pioche une carte
-            Card drawnCard = game.drawCard(); // Calls Game.drawCard()
+        // Cette fonction fonctionne de la même manière en solo et multijoueur
+        if (currentPlayer instanceof HumanPlayer && !hasDrawnThisTurn) {
+            Card drawnCard = game.drawCard();
             if (drawnCard != null) {
-                System.out.println(currentPlayer.getName() + " drew a card: " + drawnCard);
-                updateGameView(); // Update view to show the new card
-                // Check if the drawn card is playable
-                // Use the Card's canPlayOn method and get the top card from Game
-                if (!drawnCard.canPlayOn(game.getCurrentTopCard())) {
-                    System.out.println("Drawn card is not playable. Ending turn.");
-                    // Use moveToNextPlayer instead of nextTurn
-                    game.moveToNextPlayer(); // End turn if drawn card is not playable
-                    updateGameView();
-                    // Check if the next player is a computer
-                    if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                        triggerComputerTurnWithDelay();
-                    }
-                } else {
-                    System.out.println("Drawn card is playable. Player can choose to play it or keep it.");
-                    // The player can now click the drawn card to play it, or draw again (if allowed by rules)
-                    // Or potentially a "pass" button could be added if rules allow keeping the card and passing
-                }
+                System.out.println(currentPlayer.getName() + " a pioché une carte: " + drawnCard);
+                currentPlayer.addCard(drawnCard);
+                hasDrawnThisTurn = true;
+                updateGameView();
+                
+                // Si la carte piochée est jouable, le joueur peut la jouer en cliquant dessus
+                // Sinon, il doit cliquer sur "Passer" pour terminer son tour
+                // Cette logique est commune aux modes solo et multijoueur
             } else {
-                System.out.println("Deck is empty, cannot draw.");
-                // Handle empty deck scenario if necessary
+                System.out.println("Le deck est vide, impossible de piocher.");
             }
         }
     }
@@ -586,9 +606,17 @@ public class UnoGame {
                 drawButtonWidth, drawButtonHeight
             );
             // Only visible if it's a human player's turn
-            drawButton.setVisible(game.getCurrentPlayer() instanceof HumanPlayer);
+            drawButton.setVisible(game.getCurrentPlayer() instanceof HumanPlayer && !hasDrawnThisTurn);
             gamePanel.addChild(drawButton);
 
+            // Pass button logic
+            passButton.setVisible(game.getCurrentPlayer() instanceof HumanPlayer && hasDrawnThisTurn);
+            passButton.setBounds(
+                (gamePanel.getWidth() - 100) / 2,
+                gamePanel.getHeight() - 80,
+                100, 40
+            );
+            gamePanel.addChild(passButton);
 
             // --- Display Players and Cards in Respective Panels ---
             for (int i = 0; i < numPlayers; i++) {
@@ -781,25 +809,30 @@ public class UnoGame {
 
                 // Attempt to play the card using the Game logic
                 // Pass the index, not the card object
-                if (game.playCard(cardIndex)) {
-                    System.out.println("Card played successfully.");
-                    updateGameView(); // Update the view after playing
+                if (game.getCurrentTopCard() != null && clickedCard.canPlayOn(game.getCurrentTopCard())) {
+                    if (game.playCard(cardIndex)) {
+                        hasDrawnThisTurn = false;
+                        updateGameView(); // Update the view after playing
 
-                    // Check for game over
-                    if (game.isGameOver()) {
-                        announceWinner();
-                    } else {
-                        // If game not over, check if the next player is a computer
-                        if (game.getCurrentPlayer() instanceof ComputerPlayer) {
-                            triggerComputerTurnWithDelay(); // Start computer's turn after a delay
+                        // Check for game over
+                        if (game.isGameOver()) {
+                            announceWinner();
                         } else {
-                             updateGameView(); // Ensure view updates for next human player if any
+                            // If game not over, check if the next player is a computer
+                            if (game.getCurrentPlayer() instanceof ComputerPlayer) {
+                                triggerComputerTurnWithDelay(); // Start computer's turn after a delay
+                            } else {
+                                 updateGameView(); // Ensure view updates for next human player if any
+                            }
                         }
+                    } else {
+                        System.out.println("Card cannot be played.");
+                        // Optionally provide feedback to the user (e.g., shake the card view)
+                         javax.swing.JOptionPane.showMessageDialog(window, "You cannot play this card.", "Invalid Move", javax.swing.JOptionPane.WARNING_MESSAGE);
                     }
                 } else {
                     System.out.println("Card cannot be played.");
-                    // Optionally provide feedback to the user (e.g., shake the card view)
-                     javax.swing.JOptionPane.showMessageDialog(window, "You cannot play this card.", "Invalid Move", javax.swing.JOptionPane.WARNING_MESSAGE);
+                    javax.swing.JOptionPane.showMessageDialog(window, "You cannot play this card.", "Invalid Move", javax.swing.JOptionPane.WARNING_MESSAGE);
                 }
             } else {
                 System.err.println("Error: Clicked card not found in player's hand?");
